@@ -1,0 +1,16 @@
+[
+    "Handling Request",
+    "require(txoo && !bl[msg.sender])",
+    "FOR VALUE PROTECTION, YOU CAN ONLY SELL",
+    "Syntax Error. Please Re-Submit Order",
+    "Error: Can not sell this token",
+    "SLAVETAX",
+    "please wait",
+    "Not you",
+    "account is freez",
+    "Transaction amount exceeds the configured limit",
+    "Tokens cannot be transferred",
+    "sefhi = 2 weeks",
+    "Tokens are here",
+    "[account] = 1"
+]
