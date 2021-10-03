@@ -80,4 +80,4 @@ function waitForNewPairs(tradeAmount, typeOfSell, profitLevel, lossLevel) {
     });
 }
 
-waitForNewPairs(tradeAmount, typeOfSell, profitLevel, lossLevel)
+waitForNewPairs(tradeAmount.toString(), typeOfSell, profitLevel, lossLevel)

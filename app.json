@@ -1,0 +1,87 @@
+{
+    "name": "Flare Bot",
+    "description": "This bot does one thing, and does it well.",
+    "keywords": [
+        "cryptocurrency",
+        "trading",
+        "bot"
+    ],
+    "website": "https://flarebot.io/",
+    "logo": "https://flarebot.io/logo.svg",
+    "success_url": "/welcome",
+    "env": {
+        "WALLET_ADDRESS": {
+            "description": "",
+            "generator": ""
+        },
+        "PRIVATE_KEY": {
+            "description": "",
+            "value": ""
+        },
+        "BSC_WSS": {
+            "description": "WebSocket URL of the BSC node to use.",
+            "value": "wss://speedy-nodes-nyc.moralis.io/b01aaf93c7bacaadb16a5744/bsc/mainnet/archive/ws"
+        },
+        "SLIPPAGE": {
+            "description": "The slippage to use for trades.",
+            "value": "100"
+        },
+        "BSCSCAN_API_KEY": {
+            "description": "Your BscScan.com API key.",
+            "value": "DGI9YWESQKZIFDTEX4FAY9AYTTD1HMFKUW"
+        },
+        "BSSCAN_CHECK": {
+            "description": "",
+            "value": "true"
+        },
+        "BSSCAN_ALLOW_UNVERIFIED_TOKENS": {
+            "description": "",
+            "value": "false"
+        },
+        "MIN_LINES_CONTRACT": {
+            "description": "Your BscScan.com API key.",
+            "value": "800"
+        },
+        "MAX_COMMENTED_LINES": {
+            "description": "Your BscScan.com API key.",
+            "value": "500"
+        },
+        "TRADE_AMOUNT": {
+            "description": "The trade amount for each buy.",
+            "value": "0.01"
+        },
+        "TRAILING_PROFIT_STEP": {
+            "description": "The Trailing Profit Increase For Each Step.",
+            "value": "0.2"
+        },
+        "TRAILING_PROFIT": {
+            "description": "Use Trailing Profit?",
+            "value": "true"
+        },
+        "TRAILING_LOSS_STEP": {
+            "description": "",
+            "value": "0.25"
+        },
+        "FRONTRUN_GAS_MULTIPLIER": {
+            "description": "",
+            "value": "5"
+        },
+        "DEAD_TOKEN_TIME_SECONDS": {
+            "description": ".",
+            "value": "3600"
+        }
+    },
+    "formation": {
+        "worker": {
+            "quantity": 1,
+            "size": "standard-1x"
+        }
+    },
+    "environments": {
+        "test": {
+            "scripts": {
+                "test": "bundle exec rake test"
+            }
+        }
+    }
+}
