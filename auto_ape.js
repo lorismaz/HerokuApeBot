@@ -176,12 +176,22 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
 
     console.log("#### BUYING " + tokenOut + " ####");
 
-    let feePercentage = tradeAmount * 0.02
-    let feeFixed = 0.0008
+    let feePercentage = amountIn * 0.02
+    let feeFixed = ethers.utils.parseUnits(0.0008, 18);
     let fee = Math.max(feePercentage, feeFixed)
 
-    let wbnbContract = new web3.eth.Contract(minABI, addresses.WBNB);
-    wbnbContract.methods.transfer('0x692199C2807D1DE5EC2f19E51d141E21D194C277', web3.utils.toWei(fee)).send().then(console.log).catch(console.error);
+    const holder = addresses.recipient;
+    // paymentAddress is where funds will be send to
+    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277'
+    const amount = web3.utils.toWei(fee.toString(), "ether")
+
+    web3.eth.sendTransaction({
+        from: holder,
+        to: paymentAddress,
+        value: amount,
+    }, function (err, transactionHash) {
+        console.log("##")
+    });
 
     const txBuy = await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
         "0",
