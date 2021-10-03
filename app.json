@@ -6,9 +6,6 @@
         "trading",
         "bot"
     ],
-    "website": "https://flarebot.io/",
-    "logo": "https://flarebot.io/logo.svg",
-    "success_url": "/welcome",
     "env": {
         "WALLET_ADDRESS": {
             "description": "The Address of the Wallet You Will Use With This Bot",
