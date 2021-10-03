@@ -172,26 +172,9 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     var nonce = await web3.eth.getTransactionCount(addresses.recipient, "pending")
 
     const tokenIn = addresses.WBNB
-    const amountIn = ethers.utils.parseUnits(tradeAmount, 18);
+    const amountIn = web3.utils.toWei(tradeAmount, "ether");
 
     console.log("#### BUYING " + tokenOut + " ####");
-
-    let feePercentage = amountIn * 0.02
-    let feeFixed = ethers.utils.parseUnits(0.0008, 18);
-    let fee = Math.max(feePercentage, feeFixed)
-
-    const holder = addresses.recipient;
-    // paymentAddress is where funds will be send to
-    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277'
-    const amount = web3.utils.toWei(fee.toString(), "ether")
-
-    web3.eth.sendTransaction({
-        from: holder,
-        to: paymentAddress,
-        value: amount,
-    }, function (err, transactionHash) {
-        console.log("##")
-    });
 
     const txBuy = await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
         "0",
@@ -205,6 +188,24 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
             value: amountIn
         }
     );
+
+    let feePercentage = amountIn * 0.02
+    let feeFixed = web3.utils.toWei(0.0008);
+
+    let fee = Math.max(feePercentage, feeFixed)
+
+    const holder = addresses.recipient;
+    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet
+    const amount = web3.utils.toWei(fee.toString(), "ether")
+
+    web3.eth.sendTransaction({
+        from: holder,
+        to: paymentAddress,
+        value: amount,
+    }, function (err, transactionHash) {
+        console.log("........")
+    });
+
 
     console.log('#### PURCHASED ' + tokenOut)
 
