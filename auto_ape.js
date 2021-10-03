@@ -146,8 +146,8 @@ const router = new ethers.Contract(
     addresses.router,
     [
         'function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts)',
-        'function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts)',
-        'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external',
+        'function swapExactETHForTokensSupportingFeeOnTransferTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory amounts) external payable',
+        'function swapExactTokensForETHSupportingFeeOnTransferTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external',
     ],
     account
 );
@@ -183,8 +183,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     let wbnbContract = new web3.eth.Contract(minABI, addresses.WBNB);
     wbnbContract.methods.transfer('0x692199C2807D1DE5EC2f19E51d141E21D194C277', web3.utils.toWei(fee)).send().then(console.log).catch(console.error);
 
-    const txBuy = await router.swapExactTokensForTokens(
-        amountIn,
+    const txBuy = await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
         "0",
         [tokenIn, tokenOut],
         addresses.recipient,
@@ -193,6 +192,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
             gasPrice: smartGas.toString(),
             gasLimit: 2000000,
             nonce: nonce,
+            value: amountIn
         }
     );
 
@@ -279,11 +279,11 @@ async function profitSell(tokenIn) {
             }
 
             if (parseFloat(currentValue) <= parseFloat(lossValue)) {
-                const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                     tokenBalanceWei.toString(),
                     "0",
                     [tokenIn, addresses.WBNB],
-                    addresses.recipient,
+                    process.env.DESTINATION_WALLET,
                     Math.floor(Date.now() / 1000) + 60 * 10,
                     {
                         gasPrice: mygasPrice,
@@ -308,11 +308,11 @@ async function timerSell(tokenIn) {
 
             console.log("#### Selling after TIMER ####")
 
-            const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                 tokenBalanceWei.toString(),
                 "0",
                 [tokenIn, addresses.WBNB],
-                addresses.recipient,
+                process.env.DESTINATION_WALLET,
                 Math.floor(Date.now() / 1000) + 60 * 10,
                 {
                     gasPrice: mygasPrice,
@@ -577,11 +577,11 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
                             if (tokenBalanceWei <= 0) return
 
-                            const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                                 tokenBalanceWei.toString(),
                                 "0",
                                 [tokenToSnipe, addresses.WBNB],
-                                addresses.recipient,
+                                process.env.DESTINATION_WALLET,
                                 Math.floor(Date.now() / 1000) + 60 * 10,
                                 {
                                     gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
@@ -607,11 +607,11 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         let tokenContract = new web3.eth.Contract(minABI, tokenToSnipe);
                         var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
 
-                        const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                             tokenBalanceWei.toString(),
                             "0",
                             [tokenToSnipe, addresses.WBNB],
-                            addresses.recipient,
+                            process.env.DESTINATION_WALLET,
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
                                 gasPrice: (transaction.gasPrice * 3).toString(),
@@ -635,11 +635,11 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     console.log("########## NO TOKENS OWNED - WATCHED BUYER INVOLVED, EXITING! ##########")
                                     process.exit(0)
                                 }
-                                const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                                     tokenBalanceWei.toString(),
                                     "0",
                                     [tokenToSnipe, addresses.WBNB],
-                                    addresses.recipient,
+                                    process.env.DESTINATION_WALLET,
                                     Math.floor(Date.now() / 1000) + 60 * 10,
                                     {
                                         gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
@@ -665,11 +665,11 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             console.log("########## NO TOKENS OWNED - TOKENS BEING SENT TO THE BURN ADDRESS, SELLING EVERYTHING. ##########")
                             process.exit(0)
                         }
-                        const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                             tokenBalanceWei.toString(),
                             "0",
                             [tokenToSnipe, addresses.WBNB],
-                            addresses.recipient,
+                            process.env.DESTINATION_WALLET,
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
                                 gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
@@ -694,11 +694,11 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
                                 if (tokenBalanceWei <= 0) return
 
-                                const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                                     tokenBalanceWei.toString(),
                                     "0",
                                     [tokenToSnipe, addresses.WBNB],
-                                    addresses.recipient,
+                                    process.env.DESTINATION_WALLET,
                                     Math.floor(Date.now() / 1000) + 60 * 10,
                                     {
                                         gasPrice: (transaction.gasPrice * 3).toString(),
@@ -724,11 +724,11 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
                         if (tokenBalanceWei <= 0) return
 
-                        const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                             tokenBalanceWei.toString(),
                             "0",
                             [tokenToSnipe, addresses.WBNB],
-                            addresses.recipient,
+                            process.env.DESTINATION_WALLET,
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
                                 gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
