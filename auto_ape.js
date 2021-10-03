@@ -769,6 +769,4 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
             })
     })
 
-console.log(tradeAmount)
-
 checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel)
