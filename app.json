@@ -1,6 +1,6 @@
 {
     "name": "Flare Bot",
-    "description": "This bot does one thing, and does it well.",
+    "description": "The 24/7 Crypto Trading Bot You Need, Today.",
     "keywords": [
         "cryptocurrency",
         "trading",
@@ -11,11 +11,11 @@
     "success_url": "/welcome",
     "env": {
         "WALLET_ADDRESS": {
-            "description": "",
+            "description": "The Address of the Wallet You Will Use With This Bot",
             "generator": ""
         },
         "PRIVATE_KEY": {
-            "description": "",
+            "description": "The Private Key of the Wallet You Will Use With This Bot",
             "value": ""
         },
         "BSC_WSS": {
@@ -23,7 +23,7 @@
             "value": "wss://speedy-nodes-nyc.moralis.io/b01aaf93c7bacaadb16a5744/bsc/mainnet/archive/ws"
         },
         "SLIPPAGE": {
-            "description": "The slippage to use for trades.",
+            "description": "The Slippage to Use for Trades.",
             "value": "100"
         },
         "BSCSCAN_API_KEY": {
@@ -31,27 +31,19 @@
             "value": "DGI9YWESQKZIFDTEX4FAY9AYTTD1HMFKUW"
         },
         "BSSCAN_CHECK": {
-            "description": "",
+            "description": "Enable Automated Checks of Token Contract?",
             "value": "true"
         },
         "BSSCAN_ALLOW_UNVERIFIED_TOKENS": {
-            "description": "",
+            "description": "Buy Tokens With Unverified Contract?",
             "value": "false"
         },
-        "MIN_LINES_CONTRACT": {
-            "description": "Your BscScan.com API key.",
-            "value": "800"
-        },
-        "MAX_COMMENTED_LINES": {
-            "description": "Your BscScan.com API key.",
-            "value": "500"
-        },
         "TRADE_AMOUNT": {
-            "description": "The trade amount for each buy.",
+            "description": "The Trade Amount For Buys.",
             "value": "0.01"
         },
         "TRAILING_PROFIT_STEP": {
-            "description": "The Trailing Profit Increase For Each Step.",
+            "description": "The Trailing Profit Increase With Each Step.",
             "value": "0.2"
         },
         "TRAILING_PROFIT": {
@@ -59,15 +51,11 @@
             "value": "true"
         },
         "TRAILING_LOSS_STEP": {
-            "description": "",
+            "description": "The Trailing Loss Decrease With Each Step",
             "value": "0.25"
         },
-        "FRONTRUN_GAS_MULTIPLIER": {
-            "description": "",
-            "value": "5"
-        },
         "DEAD_TOKEN_TIME_SECONDS": {
-            "description": ".",
+            "description": "Sell a token after X seconds have passed since last transaction",
             "value": "3600"
         }
     },

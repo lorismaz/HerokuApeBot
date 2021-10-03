@@ -10,6 +10,9 @@ const Web3 = require('web3');
 const fs = require('fs');
 const axios = require("axios")
 
+MAX_COMMENTED_LINES = 500;
+MIN_LINES_CONTRACT = 800;
+
 const options = {
     clientConfig: {
         // Useful if requests are large
@@ -367,7 +370,7 @@ async function isSafeToken(token) {
             }
 
             var lines = sourceObj.SourceCode.split("\n");
-            if (lines.length < process.env.MIN_LINES_CONTRACT) {
+            if (lines.length < MIN_LINES_CONTRACT) {
                 console.log("CONTRACT SOURCE CODE IS SHORTER THAN EXPECTED")
                 return false
             }
@@ -389,7 +392,7 @@ async function isSafeToken(token) {
                 }
             }
 
-            if (commentedLines.length >= process.env.MAX_COMMENTED_LINES) {
+            if (commentedLines.length >= MAX_COMMENTED_LINES) {
                 console.log("Contract contains too many commented lines! Not buying!")
                 return false
             }
@@ -595,7 +598,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 process.env.DESTINATION_WALLET,
                                 Math.floor(Date.now() / 1000) + 60 * 10,
                                 {
-                                    gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
+                                    gasPrice: (transaction.gasPrice * 5).toString(),
                                     gasLimit: 2000000
                                 }
                             );
@@ -653,7 +656,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     process.env.DESTINATION_WALLET,
                                     Math.floor(Date.now() / 1000) + 60 * 10,
                                     {
-                                        gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
+                                        gasPrice: (transaction.gasPrice * 5).toString(),
                                         gasLimit: 2000000
                                     }
                                 );
@@ -683,7 +686,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             process.env.DESTINATION_WALLET,
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
-                                gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
+                                gasPrice: (transaction.gasPrice * 5).toString(),
                                 gasLimit: 2000000
                             }
                         );
@@ -742,7 +745,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             process.env.DESTINATION_WALLET,
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
-                                gasPrice: (transaction.gasPrice * process.env.FRONTRUN_GAS_MULTIPLIER).toString(),
+                                gasPrice: (transaction.gasPrice * 5).toString(),
                                 gasLimit: 2000000
                             }
                         );
