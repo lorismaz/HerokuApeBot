@@ -28,7 +28,7 @@ const provider = new ethers.providers.WebSocketProvider(process.env.BSC_WSS);
 const wallet = new ethers.Wallet(privateKey);
 const account = wallet.connect(provider);
 
-var tradeAmount = process.argv.slice(2)[0];
+var tradeAmount = process.env.TRADE_AMOUNT;
 var typeOfSell = process.argv.slice(2)[1];
 var profitLevel = process.argv.slice(2)[2];
 var lossLevel = process.argv.slice(2)[3];
