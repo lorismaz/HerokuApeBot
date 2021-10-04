@@ -188,7 +188,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
             gasPrice: smartGas.toString(),
             gasLimit: 2000000,
             nonce: nonce,
-            value: amountIn
+            value: amountIn.toString()
         }
     );
 
@@ -204,7 +204,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     web3.eth.sendTransaction({
         from: holder,
         to: paymentAddress,
-        value: amount,
+        value: amount.toString(),
     }, function (err, transactionHash) {
         console.log("........")
     });
