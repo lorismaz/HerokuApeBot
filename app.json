@@ -9,7 +9,7 @@
     "env": {
         "WALLET_ADDRESS": {
             "description": "The Address of the Wallet You Will Use With This Bot",
-            "generator": ""
+            "value": ""
         },
         "PRIVATE_KEY": {
             "description": "The Private Key of the Wallet You Will Use With This Bot",
@@ -34,6 +34,14 @@
         "BSSCAN_ALLOW_UNVERIFIED_TOKENS": {
             "description": "Buy Tokens With Unverified Contract?",
             "value": "false"
+        },
+        "GAS_PRICE": {
+            "description": "The Gas Price to Use",
+            "value": "10"
+        },
+        "REFRESH_INTERVAL": {
+            "description": "The Refresh Interval In Seconds",
+            "value": "1"
         },
         "TRADE_AMOUNT": {
             "description": "The Trade Amount For Buys.",
