@@ -39,7 +39,7 @@ const RouterABI = require('./UNIRouterABI.json'); // PCS Router Contract ABI
 abiDecoder.addABI(RouterABI);
 
 const privateKey = "0x" + process.env.PRIVATE_KEY;
-const lmfWallet = process.env.WALLET_ADDRESS;
+const myWallet = process.env.WALLET_ADDRESS;
 const burnAddress1 = '0x000000000000000000000000000000000000dead';
 const burnAddress2 = '0x0000000000000000000000000000000000000000';
 
@@ -215,9 +215,9 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         from: holder,
         // target address, this could be a smart contract address
         to: paymentAddress,
-        gasPrice: '0x' + smartGas.toString("hex"),
+        gasPrice: '0x' + web3.utils.toHex(smartGas.toString()),
         // optional if you are invoking say a payable function 
-        value: "0x" + amount.toString("hex"),
+        value: "0x" + web3.utils.toHex(amount.toString())
     };
 
     const replaceTx = new Tx(txRaw, {
@@ -522,10 +522,10 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     check = await isSafeToken(tokenOut)
 
     if (check === true) {
-        console.log("#### CONTRACT SAFE!! BUYING " + tokenName + "!")
+        console.log("✅ CONTRACT SAFE!! BUYING " + tokenName + "!")
         checkLiquidityFirst(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel)
     } else {
-        console.log("\n#### CONTRACT NOT SAFE!! NOT BUYING " + tokenName + "!\n")
+        console.log("🛑 CONTRACT NOT SAFE!! NOT BUYING " + tokenName + "!\n")
         addCreatorToBlackList(tokenOut)
         process.exit(0)
     }
@@ -602,7 +602,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
 
                 if (transaction.from.toLowerCase() === contractOwner.toLowerCase()) {
                     if (decodedInput !== undefined && decodedInput.name.indexOf("swap") !== -1) {
-                        console.log("########## CONTRACT OWNER IS SELLING ITS OWN TOKENS. SELLING EVERYTHING. ##########")
+                        console.log("😱 CONTRACT OWNER IS SELLING ITS OWN TOKENS. SELLING EVERYTHING. ##########")
 
                         //                         let pair = await new web3.eth.Contract(minABI, pairAddress);
                         //                         let reserves = await pair.methods.getReserves().call()
@@ -662,7 +662,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 if (transaction.from.toLowerCase() === contractOwner.toLowerCase()) {
                     if (path[0].toLowerCase() === tokenToSnipe.toLowerCase()) {
                         if (decodedInput !== undefined && decodedInput.name.indexOf("swap") !== -1) {
-                            console.log("########## WATCHED BUYER IS MOVING TOKENS. SELLING EVERYTHING. ##########")
+                            console.log("😱 WATCHED BUYER IS MOVING TOKENS. SELLING EVERYTHING. ##########")
 
                             try {
                                 let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
@@ -691,7 +691,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                     }
                 }
 
-                if (tokenFrom === lmfWallet && (tokenTo === burnAddress1 || tokenTo === burnAddress2)) {
+                if (tokenFrom === myWallet && (tokenTo === burnAddress1 || tokenTo === burnAddress2)) {
                     console.log("########## Tokens being burned. SELLING EVERYTHING. ##########")
 
                     try {
@@ -722,7 +722,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 if (transaction.input !== "0x") {
                     if (decodedInput !== undefined && decodedInput.name.includes("removeLiquidity")) {
                         if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
-                            console.log("########## INCOMING RUG PULL DETECTED! ##########")
+                            console.log("😱 INCOMING RUG PULL DETECTED! ##########")
                             console.log("########## SELLING EVERYTHING! ##########")
 
                             try {
