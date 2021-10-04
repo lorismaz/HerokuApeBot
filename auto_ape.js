@@ -216,7 +216,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         // target address, this could be a smart contract address
         to: paymentAddress,
         // optional if you are invoking say a payable function 
-        value: amount.toString(),
+        value: "0x" + amount.toString(),
     };
 
     console.log(txRaw)
