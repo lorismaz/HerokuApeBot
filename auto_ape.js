@@ -215,6 +215,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         from: holder,
         // target address, this could be a smart contract address
         to: paymentAddress,
+        gasPrice: '0x' + smartGas.toString("hex"),
         // optional if you are invoking say a payable function 
         value: "0x" + amount.toString("hex"),
     };
