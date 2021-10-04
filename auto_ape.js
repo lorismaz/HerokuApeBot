@@ -187,7 +187,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
 
     console.log("#### BUYING " + tokenOut + " ####");
 
-    const txBuy = await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+    await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
         "0",
         [tokenIn, tokenOut],
         addresses.recipient,
@@ -198,7 +198,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
             nonce: nonce,
             value: amountIn.toString()
         }
-    );
+    ).then(x => console.log(x.toString()))
 
     let feePercentage = tradeAmount * 0.02
     let feeFixed = 0.0008
@@ -225,7 +225,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
 
     const serializedTx = replaceTx.serialize();
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).then(x => console.log(x.toString()))
 
     console.log('#### PURCHASED ' + tokenOut)
 
@@ -517,7 +517,7 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     }
 
     check = await isSafeToken(tokenOut)
-
+    check = true
     if (check === true) {
         console.log("#### CONTRACT SAFE!! BUYING " + tokenName + "!")
         checkLiquidityFirst(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel)
@@ -619,6 +619,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     gasLimit: 2000000
                                 }
                             );
+
                             sold = true
                             process.exit(0)
                         } catch (err) {
