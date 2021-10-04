@@ -61,12 +61,5 @@
             "quantity": 1,
             "size": "free"
         }
-    },
-    "environments": {
-        "test": {
-            "scripts": {
-                "test": "bundle exec rake test"
-            }
-        }
     }
 }
