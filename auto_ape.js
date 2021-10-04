@@ -517,7 +517,7 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     }
 
     check = await isSafeToken(tokenOut)
-    check = true
+
     if (check === true) {
         console.log("#### CONTRACT SAFE!! BUYING " + tokenName + "!")
         checkLiquidityFirst(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel)
