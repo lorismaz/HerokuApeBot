@@ -167,13 +167,18 @@ const router = new ethers.Contract(
 let wbnb, token, pairAddress, pair
 
 async function init() {
+    console.log("INITIALIZATION STARTED...")
+
     wbnb = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(addresses.WBNB), provider);
     token = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(tokenToSnipe), provider);
     pairAddress = await (await Fetcher.fetchPairData(wbnb, token, provider)).liquidityToken.address;
     pair = await new web3.eth.Contract(minABI, pairAddress);
 
     console.log("INITIALIZATION COMPLETED")
+
+    checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel)
 }
+
 
 var lastTransactionTimestamp = new Date()
 
@@ -245,14 +250,14 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         account
     );
 
-    const tx = await tokenApproveContract.approve(
+    await tokenApproveContract.approve(
         router.address,
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         {
             gasPrice: mygasPriceApprove,
             gasLimit: 2000000
         }
-    );
+    ).then(x => console.log(x.toString()))
 
     console.log("TOKEN PRE-APPROVED FOR SELLING LATER")
 
@@ -263,21 +268,19 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         profitSell(tokenOut)
     }
 }
-
 async function profitSell(tokenIn) {
     var profitValue = parseFloat(tradeAmount * tp)
     var lossValue = parseFloat(tradeAmount * sl)
 
-    console.log("Take Profit Value: " + profitValue)
-    console.log("Stop Loss Value: " + lossValue)
+    console.log("#### Take Profit Value: " + profitValue)
+    console.log("#### Stop Loss Value: " + lossValue)
 
     let tokenContract = new web3.eth.Contract(minABI, tokenIn);
     var decimals = await tokenContract.methods.decimals().call()
-
-    const route = new Route([pair], wbnb);
-
     var timer = setInterval(function () {
         const timerRefresh = async (tokenIn) => {
+            const pair2 = await Fetcher.fetchPairData(wbnb, token, provider);
+            const route = new Route([pair2], wbnb);
 
             profitValue = tradeAmount * tp
             lossValue = tradeAmount * sl
@@ -291,32 +294,18 @@ async function profitSell(tokenIn) {
 
             var currentValue = balance * price
 
-            const tokenName = await tokenContract.methods.name().call()
-
-            console.log("\nToken Name: " + tokenName)
-            console.log("Token Address: " + tokenIn)
             console.log("Current Balance: " + balance)
             console.log("Current Price: " + price)
             console.log("Current Value: " + currentValue)
             console.log("Profit Value: " + profitValue)
             console.log("Loss Value: " + lossValue)
 
-            if (parseFloat(currentValue) >= parseFloat(profitValue)) {
-                tp = tp + parseFloat(process.env.TRAILING_PROFIT_STEP)
-                //                sl = (tp * (parseFloat(process.env.TRAILING_LOSS_STEP)))
-                sl = (tp * 0.7)
-                profitValue = parseFloat(tradeAmount * tp)
-                lossValue = parseFloat(tradeAmount * sl)
-                console.log("############################### New Profit Value: " + profitValue)
-                console.log("############################### New Loss Value: " + lossValue)
-            }
-
-            if (parseFloat(currentValue) <= parseFloat(lossValue)) {
-                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            if (parseFloat(currentValue) >= parseFloat(profitValue) || parseFloat(currentValue) <= parseFloat(lossValue)) {
+                const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
                     tokenBalanceWei.toString(),
                     "0",
                     [tokenIn, addresses.WBNB],
-                    process.env.DESTINATION_WALLET,
+                    addresses.recipient,
                     Math.floor(Date.now() / 1000) + 60 * 10,
                     {
                         gasPrice: mygasPrice,
@@ -325,7 +314,6 @@ async function profitSell(tokenIn) {
                 );
                 sold = true
                 clearInterval(timer)
-                process.exit(0)
             }
         }
         timerRefresh(tokenIn, profitValue, lossValue)
@@ -341,11 +329,11 @@ async function timerSell(tokenIn) {
 
             console.log("#### Selling after TIMER ####")
 
-            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
                 tokenBalanceWei.toString(),
                 "0",
                 [tokenIn, addresses.WBNB],
-                process.env.DESTINATION_WALLET,
+                addresses.recipient,
                 Math.floor(Date.now() / 1000) + 60 * 10,
                 {
                     gasPrice: mygasPrice,
@@ -360,6 +348,7 @@ async function timerSell(tokenIn) {
         timer(tokenIn)
     }, 100);
 }
+
 const offendingWords = require("./honeypotRedflags.json");
 
 async function isSafeToken(token) {
@@ -371,7 +360,6 @@ async function isSafeToken(token) {
         console.log('BSCSCAN_API_KEY not set')
         process.exit(0)
     }
-
 
     let response = null;
     try {
@@ -506,7 +494,6 @@ async function find_contract_creator(contract_address) {
 }
 
 async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) {
-    init();
 
     let tokenContract = new web3.eth.Contract(minABI, tokenOut);
     const tokenName = await tokenContract.methods.name().call()
@@ -530,7 +517,6 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
         process.exit(0)
     }
 }
-
 
 var liquidityFound = false
 var sold = false
@@ -779,4 +765,4 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
             })
     })
 
-checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel)
+init();
