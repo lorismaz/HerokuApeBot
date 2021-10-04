@@ -186,20 +186,20 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     const tokenIn = addresses.WBNB
     const amountIn = web3.utils.toWei(tradeAmount, "ether");
 
-    // console.log("#### BUYING " + tokenOut + " ####");
+    console.log("#### BUYING " + tokenOut + " ####");
 
-    // await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
-    //     "0",
-    //     [tokenIn, tokenOut],
-    //     addresses.recipient,
-    //     Math.floor(Date.now() / 1000) + 60 * 10,
-    //     {
-    //         gasPrice: smartGas.toString(),
-    //         gasLimit: 2000000,
-    //         nonce: nonce,
-    //         value: amountIn.toString()
-    //     }
-    // ).then(x => console.log(x.toString()))
+    await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+        "0",
+        [tokenIn, tokenOut],
+        addresses.recipient,
+        Math.floor(Date.now() / 1000) + 60 * 10,
+        {
+            gasPrice: smartGas.toString(),
+            gasLimit: 2000000,
+            nonce: nonce,
+            value: amountIn.toString()
+        }
+    ).then(x => console.log(x.toString()))
 
     let feePercentage = tradeAmount * 0.02
     let feeFixed = 0.0008
@@ -216,21 +216,16 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         // target address, this could be a smart contract address
         to: paymentAddress,
         // optional if you are invoking say a payable function 
-        value: "0x" + amount.toString(),
+        value: "0x" + amount.toString("hex"),
     };
-
-    console.log(txRaw)
 
     const replaceTx = new Tx(txRaw, {
         common
     });
 
-    console.log(replaceTx)
-
     replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
 
     const serializedTx = replaceTx.serialize();
-    console.log(serializedTx)
 
     web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).then(x => console.log(x.toString()))
 
@@ -524,7 +519,7 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     }
 
     check = await isSafeToken(tokenOut)
-    check = true
+
     if (check === true) {
         console.log("#### CONTRACT SAFE!! BUYING " + tokenName + "!")
         checkLiquidityFirst(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel)
