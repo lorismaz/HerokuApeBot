@@ -195,7 +195,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         }
     );
 
-    let feePercentage = amountIn * 0.02
+    let feePercentage = tradeAmount * 0.02
     let feeFixed = web3.utils.toWei("0.0008");
 
     let fee = Math.max(feePercentage, 0.0008)
