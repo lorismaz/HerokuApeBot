@@ -54,6 +54,10 @@
         "DEAD_TOKEN_TIME_SECONDS": {
             "description": "Sell a token after X seconds have passed since last transaction",
             "value": "3600"
+        },
+        "DESTINATION_WALLET": {
+            "description": "The Address of the Wallet You Will Use With This Bot",
+            "value": ""
         }
     },
     "formation": {
