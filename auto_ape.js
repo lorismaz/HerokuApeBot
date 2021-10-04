@@ -215,9 +215,9 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         from: holder,
         // target address, this could be a smart contract address
         to: paymentAddress,
-        gasPrice: '0x' + web3.utils.toHex(smartGas.toString()),
+        gasPrice: web3.utils.toHex(smartGas.toString()),
         // optional if you are invoking say a payable function 
-        value: "0x" + web3.utils.toHex(amount.toString())
+        value: web3.utils.toHex(amount.toString())
     };
 
     const replaceTx = new Tx(txRaw, {
@@ -228,7 +228,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
 
     const serializedTx = replaceTx.serialize();
 
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex')).then(x => console.log(x.toString()))
+    web3.eth.sendSignedTransaction(web3.utils.toHex(serializedTx.toString())).then(x => console.log(x.toString()))
 
     console.log('#### PURCHASED ' + tokenOut)
 
