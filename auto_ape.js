@@ -34,6 +34,9 @@ const lmfWallet = process.env.WALLET_ADDRESS;
 const burnAddress1 = '0x000000000000000000000000000000000000dead';
 const burnAddress2 = '0x0000000000000000000000000000000000000000';
 
+const accountWeb3 = await web3.eth.accounts.privateKeyToAccount(privateKey);
+await web3.eth.accounts.wallet.add(accountWeb3);
+
 const provider = new ethers.providers.WebSocketProvider(process.env.BSC_WSS);
 const wallet = new ethers.Wallet(privateKey);
 const account = wallet.connect(provider);
@@ -193,9 +196,9 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     );
 
     let feePercentage = amountIn * 0.02
-    let feeFixed = web3.utils.toWei(0.0008);
+    let feeFixed = web3.utils.toWei("0.0008");
 
-    let fee = Math.max(feePercentage, feeFixed)
+    let fee = Math.max(feePercentage, 0.0008)
 
     const holder = addresses.recipient;
     const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet
@@ -208,7 +211,6 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     }, function (err, transactionHash) {
         console.log("........")
     });
-
 
     console.log('#### PURCHASED ' + tokenOut)
 
