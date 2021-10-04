@@ -13,6 +13,14 @@ const axios = require("axios")
 MAX_COMMENTED_LINES = 500;
 MIN_LINES_CONTRACT = 800;
 
+const Common = require('ethereumjs-common');
+
+const common = Common.default.forCustomChain('mainnet', {
+    name: 'bnb',
+    networkId: 56,
+    chainId: 56
+}, 'petersburg');
+
 const options = {
     clientConfig: {
         // Useful if requests are large
@@ -33,9 +41,6 @@ const privateKey = "0x" + process.env.PRIVATE_KEY;
 const lmfWallet = process.env.WALLET_ADDRESS;
 const burnAddress1 = '0x000000000000000000000000000000000000dead';
 const burnAddress2 = '0x0000000000000000000000000000000000000000';
-
-const accountWeb3 = await web3.eth.accounts.privateKeyToAccount(privateKey);
-await web3.eth.accounts.wallet.add(accountWeb3);
 
 const provider = new ethers.providers.WebSocketProvider(process.env.BSC_WSS);
 const wallet = new ethers.Wallet(privateKey);
@@ -196,21 +201,31 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     );
 
     let feePercentage = tradeAmount * 0.02
-    let feeFixed = web3.utils.toWei("0.0008");
+    let feeFixed = 0.0008
 
-    let fee = Math.max(feePercentage, 0.0008)
+    let fee = Math.max(feePercentage, feeFixed)
 
     const holder = addresses.recipient;
-    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet
+    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
     const amount = web3.utils.toWei(fee.toString(), "ether")
 
-    web3.eth.sendTransaction({
+    const txRaw = {
+        // this could be provider.addresses[0] if it exists
         from: holder,
+        // target address, this could be a smart contract address
         to: paymentAddress,
+        // optional if you are invoking say a payable function 
         value: amount.toString(),
-    }, function (err, transactionHash) {
-        console.log("........")
+    };
+
+    const replaceTx = new Tx(txRaw, {
+        common
     });
+
+    replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
+
+    const serializedTx = replaceTx.serialize();
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
 
     console.log('#### PURCHASED ' + tokenOut)
 
