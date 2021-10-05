@@ -768,4 +768,4 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
             })
     })
 
-snipe(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel, mygasPriceBuy)
+checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel, mygasPriceBuy)
