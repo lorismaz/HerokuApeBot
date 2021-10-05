@@ -435,7 +435,7 @@ async function isSafeToken(token) {
 }
 
 async function addCreatorToBlackList(contractAddress) {
-    console.log(`BLACKLISTING CONTRACT CREATOR ADDRESS: ` + contractOwner);
+    console.log("BLACKLISTING CONTRACT CREATOR ADDRESS: " + contractOwner);
     if (!blacklisted.includes(contractOwner.toLowerCase())) {
         fs.appendFile(__dirname + "/blacklist.txt", "\n" + contractOwner, function (err) {
             if (err) return console.log(err);
@@ -448,7 +448,7 @@ var check = false
 
 async function search_contract_cretion_block(contract_address) {
     var highest_block = await web3.eth.getBlockNumber();
-    var lowest_block = highest_block - 500;
+    var lowest_block = highest_block - 10000;
 
     var contract_code = await web3.eth.getCode(contract_address, highest_block);
 
@@ -504,7 +504,7 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
 
     let contractOwner = await find_contract_creator(tokenOut)
     if (contractOwner == -1) {
-        console.log("contract owner address not found. skipping")
+        console.log("Contract owner address too far in the past. Skipping this token for performance.")
         process.exit(0)
     }
 
