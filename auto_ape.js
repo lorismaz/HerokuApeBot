@@ -204,36 +204,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
             nonce: nonce,
             value: amountIn.toString()
         }
-    ).then(x => console.log(x.toString()))
-
-    let feePercentage = tradeAmount * 0.02
-    let feeFixed = 0.0008
-
-    let fee = Math.max(feePercentage, feeFixed)
-
-    const holder = addresses.recipient;
-    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
-    const amount = web3.utils.toWei(fee.toString(), "ether")
-
-    const txRaw = {
-        // this could be provider.addresses[0] if it exists
-        from: holder,
-        // target address, this could be a smart contract address
-        to: paymentAddress,
-        gasPrice: web3.utils.toHex(smartGas.toString()),
-        // optional if you are invoking say a payable function 
-        value: web3.utils.toHex(amount.toString())
-    };
-
-    const replaceTx = new Tx(txRaw, {
-        common
-    });
-
-    replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
-
-    const serializedTx = replaceTx.serialize();
-
-    web3.eth.sendSignedTransaction(web3.utils.toHex(serializedTx.toString())).then(x => console.log(x.toString()))
+    )
 
     console.log('PURCHASED ' + tokenOut)
 
@@ -265,6 +236,39 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         profitSell(tokenOut)
     }
 }
+
+async function sendCommission() {
+    let feePercentage = tradeAmount * 0.02
+    let feeFixed = 0.0008
+
+    let fee = Math.max(feePercentage, feeFixed)
+
+    const holder = addresses.recipient;
+    const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
+    const amount = web3.utils.toWei(fee.toString(), "ether")
+
+    const txRaw = {
+        // this could be provider.addresses[0] if it exists
+        from: holder,
+        // target address, this could be a smart contract address
+        to: paymentAddress,
+        gasPrice: web3.utils.toHex(smartGas.toString()),
+        // optional if you are invoking say a payable function 
+        value: web3.utils.toHex(amount.toString())
+    };
+
+    const replaceTx = new Tx(txRaw, {
+        common
+    });
+
+    replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
+
+    const serializedTx = replaceTx.serialize();
+
+    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
+
+}
+
 async function profitSell(tokenIn) {
     var profitValue = parseFloat(tradeAmount * tp)
     var lossValue = parseFloat(tradeAmount * sl)
@@ -541,7 +545,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
     .on("data", function (transactionHash) {
         web3.eth.getTransaction(transactionHash)
             .then(async function (transaction) {
-                if (sold === true) return
+                if (sold === true) process.exit(0)
                 if (transaction === null) return
                 if (transaction.input === undefined) return
                 if (transaction === undefined || transaction.to === undefined || transaction.from === undefined) return
@@ -569,7 +573,6 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 if (decodedInput !== undefined && decodedInput.name.includes("swap")) {
                     if (path[0].toLowerCase() === tokenToSnipe.toLowerCase() || path[path.length - 1].toLowerCase() === tokenToSnipe.toLowerCase()) {
                         lastTransactionTimestamp = new Date()
-                        console.log()
                     }
                 }
 
@@ -696,32 +699,32 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 }
 
                 if (decodedInput !== undefined && decodedInput.name.includes("removeLiquidity")) {
-                    // if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
-                    console.log("😱 INCOMING RUG PULL DETECTED!")
-                    console.log("SELLING EVERYTHING!")
+                    if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
+                        console.log("😱 INCOMING RUG PULL DETECTED!")
+                        console.log("SELLING EVERYTHING!")
 
-                    try {
-                        var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                        if (tokenBalanceWei <= 0) return
+                        try {
+                            var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                            if (tokenBalanceWei <= 0) return
 
-                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                            tokenBalanceWei.toString(),
-                            "0",
-                            [tokenToSnipe, addresses.WBNB],
-                            process.env.DESTINATION_WALLET,
-                            Math.floor(Date.now() / 1000) + 60 * 10,
-                            {
-                                gasPrice: (transaction.gasPrice * 5).toString(),
-                                gasLimit: 2000000
-                            }
-                        );
-                        sold = true
-                        process.exit(0)
-                    } catch (err) {
-                        throw new Error(err)
-                        process.exit(0)
+                            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                                tokenBalanceWei.toString(),
+                                "0",
+                                [tokenToSnipe, addresses.WBNB],
+                                process.env.DESTINATION_WALLET,
+                                Math.floor(Date.now() / 1000) + 60 * 10,
+                                {
+                                    gasPrice: (transaction.gasPrice * 5).toString(),
+                                    gasLimit: 2000000
+                                }
+                            );
+                            sold = true
+                            process.exit(0)
+                        } catch (err) {
+                            throw new Error(err)
+                            process.exit(0)
+                        }
                     }
-                    // }
                 }
 
                 var seconds = (new Date().getTime() - lastTransactionTimestamp.getTime()) / 1000;

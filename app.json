@@ -17,7 +17,7 @@
         },
         "BSC_WSS": {
             "description": "WebSocket URL of the BSC node to use.",
-            "value": "wss://speedy-nodes-nyc.moralis.io/c6789ea15def96f831df70c7/bsc/mainnet/archive/ws"
+            "value": "wss://dreamy-kilby:rack-gravy-dose-stout-hunger-uproot@ws-nd-684-786-579.p2pify.com/7a7b720eb87de3c698c856e75d5bc46a"
         },
         "SLIPPAGE": {
             "description": "The Slippage to Use for Trades.",
