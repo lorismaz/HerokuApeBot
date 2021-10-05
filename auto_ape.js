@@ -186,14 +186,12 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     tp = parseFloat(profitLevel)
     sl = parseFloat(lossLevel)
 
-    var nonce = await web3.eth.getTransactionCount(addresses.recipient, "pending")
+    var nonce = await web3.eth.getTransactionCount(addresses.recipient, "latest")
 
     const tokenIn = addresses.WBNB
     const amountIn = web3.utils.toWei(tradeAmount, "ether");
 
     console.log("BUYING " + tokenOut);
-
-    sendCommission();
 
     await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
         "0",
@@ -207,6 +205,8 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
             value: amountIn.toString()
         }
     )
+
+    sendCommission(nonce + 1);
 
     console.log('PURCHASED ' + tokenOut)
 
@@ -239,17 +239,14 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
     }
 }
 
-async function sendCommission() {
+async function sendCommission(nonce) {
     let feePercentage = tradeAmount * 0.02
     let feeFixed = 0.0008
 
     let fee = Math.max(feePercentage, feeFixed)
 
-    const holder = addresses.recipient;
     const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
     const amount = web3.utils.toWei(fee.toString(), "ether")
-
-    const nonce = await web3.eth.getTransactionCount(holder, 'latest'); // nonce starts counting from 0
 
     const transaction = {
         'to': paymentAddress,
@@ -262,9 +259,9 @@ async function sendCommission() {
 
     web3.eth.sendSignedTransaction(signedTx.rawTransaction, function (error, hash) {
         if (!error) {
-            console.log("🎉");
+            console.log("🎉 The hash of your transaction is: ", hash, "\n Check Alchemy's Mempool to view the status of your transaction!");
         } else {
-            // console.log("❗Something went wrong while submitting your transaction:", error)
+            console.log("❗Something went wrong while submitting your transaction:", error)
         }
     });
 }
