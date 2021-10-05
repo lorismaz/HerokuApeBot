@@ -705,29 +705,31 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
 
                 if (decodedInput !== undefined && decodedInput.name.includes("removeLiquidity")) {
                     if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
-                        console.log("😱 INCOMING RUG PULL DETECTED!")
-                        console.log("SELLING EVERYTHING!")
+                        if (check === true && sold === false) {
+                            console.log("😱 INCOMING RUG PULL DETECTED!")
+                            console.log("SELLING EVERYTHING!")
 
-                        try {
-                            var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                            if (tokenBalanceWei <= 0) return
+                            try {
+                                var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                                if (tokenBalanceWei <= 0) return
 
-                            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                                tokenBalanceWei.toString(),
-                                "0",
-                                [tokenToSnipe, addresses.WBNB],
-                                process.env.DESTINATION_WALLET,
-                                Math.floor(Date.now() / 1000) + 60 * 10,
-                                {
-                                    gasPrice: (transaction.gasPrice * 5).toString(),
-                                    gasLimit: 2000000
-                                }
-                            );
-                            sold = true
-                            process.exit(0)
-                        } catch (err) {
-                            console.log(err)
-                            process.exit(0)
+                                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                                    tokenBalanceWei.toString(),
+                                    "0",
+                                    [tokenToSnipe, addresses.WBNB],
+                                    process.env.DESTINATION_WALLET,
+                                    Math.floor(Date.now() / 1000) + 60 * 10,
+                                    {
+                                        gasPrice: (transaction.gasPrice * 5).toString(),
+                                        gasLimit: 2000000
+                                    }
+                                );
+                                sold = true
+                                process.exit(0)
+                            } catch (err) {
+                                console.log(err)
+                                process.exit(0)
+                            }
                         }
                     }
                 }
