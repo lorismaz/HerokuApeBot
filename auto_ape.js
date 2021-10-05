@@ -175,10 +175,7 @@ async function init() {
     pair = await new web3.eth.Contract(minABI, pairAddress);
 
     console.log("INITIALIZATION COMPLETED")
-
-    checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel)
 }
-
 
 var lastTransactionTimestamp = new Date()
 
@@ -428,7 +425,7 @@ async function isSafeToken(token) {
 }
 
 async function addCreatorToBlackList(contractAddress) {
-    console.log(`BLACKLISTING CONTRACT CREATOR ADDRESS: ${contractOwner}`);
+    console.log(`BLACKLISTING CONTRACT CREATOR ADDRESS: ` + contractOwner);
     if (!blacklisted.includes(contractOwner.toLowerCase())) {
         fs.appendFile(__dirname + "/blacklist.txt", "\n" + contractOwner, function (err) {
             if (err) return console.log(err);
@@ -441,7 +438,7 @@ var check = false
 
 async function search_contract_cretion_block(contract_address) {
     var highest_block = await web3.eth.getBlockNumber();
-    var lowest_block = 0;
+    var lowest_block = highest_block - 500;
 
     var contract_code = await web3.eth.getCode(contract_address, highest_block);
 
@@ -454,10 +451,10 @@ async function search_contract_cretion_block(contract_address) {
         let search_block = parseInt((lowest_block + highest_block) / 2)
         contract_code = await web3.eth.getCode(contract_address, search_block);
 
-        //console.log(highest_block, lowest_block, search_block, contract_code);
 
         if (contract_code != "0x") {
             highest_block = search_block;
+
         } else if (contract_code == "0x") {
             lowest_block = search_block;
         }
@@ -466,7 +463,6 @@ async function search_contract_cretion_block(contract_address) {
             return highest_block;
         }
     }
-
 }
 
 async function search_contract_creator(contract_address, block) {
@@ -476,8 +472,6 @@ async function search_contract_creator(contract_address, block) {
 
     for (transaction in transactions) {
         let receipt = await web3.eth.getTransactionReceipt(transactions[transaction]);
-
-        //console.log(receipt);
 
         if (receipt.contractAddress == contract_address) {
             return receipt.from
@@ -490,15 +484,20 @@ async function search_contract_creator(contract_address, block) {
 async function find_contract_creator(contract_address) {
     var block = await search_contract_cretion_block(contract_address);
     var creator = await search_contract_creator(contract_address, block);
+
     return creator;
 }
 
 async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) {
-
     let tokenContract = new web3.eth.Contract(minABI, tokenOut);
     const tokenName = await tokenContract.methods.name().call()
 
     let contractOwner = await find_contract_creator(tokenOut)
+    if (contractOwner == -1) {
+        throw new Error("contract owner address not found. skipping")
+        process.exit(0)
+    }
+
     console.log("Contract Owner address is: " + contractOwner);
 
     if (blacklisted.includes(contractOwner)) {
@@ -506,7 +505,8 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
         process.exit(0)
     }
 
-    check = await isSafeToken(tokenOut)
+    // check = await isSafeToken(tokenOut)
+    check = true
 
     if (check === true) {
         console.log("✅ CONTRACT SAFE!! BUYING " + tokenName + "!")
@@ -696,32 +696,32 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 }
 
                 if (decodedInput !== undefined && decodedInput.name.includes("removeLiquidity")) {
-                    if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
-                        console.log("😱 INCOMING RUG PULL DETECTED!")
-                        console.log("SELLING EVERYTHING!")
+                    // if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
+                    console.log("😱 INCOMING RUG PULL DETECTED!")
+                    console.log("SELLING EVERYTHING!")
 
-                        try {
-                            var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                            if (tokenBalanceWei <= 0) return
+                    try {
+                        var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                        if (tokenBalanceWei <= 0) return
 
-                            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                                tokenBalanceWei.toString(),
-                                "0",
-                                [tokenToSnipe, addresses.WBNB],
-                                process.env.DESTINATION_WALLET,
-                                Math.floor(Date.now() / 1000) + 60 * 10,
-                                {
-                                    gasPrice: (transaction.gasPrice * 5).toString(),
-                                    gasLimit: 2000000
-                                }
-                            );
-                            sold = true
-                            process.exit(0)
-                        } catch (err) {
-                            throw new Error(err)
-                            process.exit(0)
-                        }
+                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                            tokenBalanceWei.toString(),
+                            "0",
+                            [tokenToSnipe, addresses.WBNB],
+                            process.env.DESTINATION_WALLET,
+                            Math.floor(Date.now() / 1000) + 60 * 10,
+                            {
+                                gasPrice: (transaction.gasPrice * 5).toString(),
+                                gasLimit: 2000000
+                            }
+                        );
+                        sold = true
+                        process.exit(0)
+                    } catch (err) {
+                        throw new Error(err)
+                        process.exit(0)
                     }
+                    // }
                 }
 
                 var seconds = (new Date().getTime() - lastTransactionTimestamp.getTime()) / 1000;
@@ -765,4 +765,4 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
             })
     })
 
-init();
+snipe(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel, mygasPriceBuy)
