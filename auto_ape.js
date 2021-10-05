@@ -249,28 +249,30 @@ async function sendCommission() {
     const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
     const amount = web3.utils.toWei(fee.toString(), "ether")
 
-    const txRaw = {
-        // this could be provider.addresses[0] if it exists
-        from: holder,
-        // target address, this could be a smart contract address
-        to: paymentAddress,
-        gasPrice: web3.utils.toHex(smartGas.toString()),
-        // optional if you are invoking say a payable function 
-        value: web3.utils.toHex(amount.toString())
+    var rawTransaction = {
+        "from": holder,
+        "nonce": web3.utils.toHex(nonce),
+        "gasPrice": web3.utils.toHex(smartGas),
+        "gasLimit": web3.utils.toHex(gasLimit),
+        "to": paymentAddress,
+        "value": amount,
+        "chainId": 56
     };
 
-    console.log(txRaw)
+    var privKey = new Buffer(process.env.PRIVATE_KEY, 'hex');
+    var tx = new Tx(rawTransaction);
 
-    const replaceTx = new Tx(txRaw, {
-        common
+    tx.sign(privKey);
+    var serializedTx = tx.serialize();
+
+    web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function (err, hash) {
+        if (!err) {
+            console.log('Txn Sent and hash is ' + hash);
+        }
+        else {
+            console.error(err);
+        }
     });
-
-    replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
-
-    const serializedTx = replaceTx.serialize();
-
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-
 }
 
 async function profitSell(tokenIn) {
@@ -433,7 +435,7 @@ async function isSafeToken(token) {
 }
 
 async function addCreatorToBlackList(contractAddress) {
-    console.log(`BLACKLISTING CONTRACT CREATOR ADDRESS: ` + contractOwner);
+    console.log("BLACKLISTING CONTRACT CREATOR ADDRESS: " + contractOwner);
     if (!blacklisted.includes(contractOwner.toLowerCase())) {
         fs.appendFile(__dirname + "/blacklist.txt", "\n" + contractOwner, function (err) {
             if (err) return console.log(err);
@@ -446,7 +448,7 @@ var check = false
 
 async function search_contract_cretion_block(contract_address) {
     var highest_block = await web3.eth.getBlockNumber();
-    var lowest_block = highest_block - 500;
+    var lowest_block = highest_block - 10000;
 
     var contract_code = await web3.eth.getCode(contract_address, highest_block);
 
@@ -502,14 +504,14 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
 
     let contractOwner = await find_contract_creator(tokenOut)
     if (contractOwner == -1) {
-        throw new Error("contract owner address not found. skipping")
+        console.log("Contract owner address too far in the past. Skipping this token for performance.")
         process.exit(0)
     }
 
     console.log("Contract Owner address is: " + contractOwner);
 
     if (blacklisted.includes(contractOwner)) {
-        throw new Error("TOKEN CREATOR IS BLACKLISTED. SKIPPING.")
+        console.log("TOKEN CREATOR IS BLACKLISTED. SKIPPING.")
         process.exit(0)
     }
 
@@ -608,7 +610,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             sold = true
                             process.exit(0)
                         } catch (err) {
-                            throw new Error(err)
+                            console.log(err)
                             process.exit(0)
                         }
                     }
@@ -666,7 +668,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 sold = true
                                 process.exit(0)
                             } catch (err) {
-                                throw new Error(err)
+                                console.log(err)
                                 process.exit(0)
                             }
                         }
@@ -696,36 +698,38 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         sold = true
                         process.exit(0)
                     } catch (err) {
-                        throw new Error(err)
+                        console.log(err)
                         process.exit(0)
                     }
                 }
 
                 if (decodedInput !== undefined && decodedInput.name.includes("removeLiquidity")) {
                     if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[0].value.toLowerCase() === tokenToSnipe.toLowerCase() || decodedInput.params[1].value.toLowerCase() === tokenToSnipe.toLowerCase()) {
-                        console.log("😱 INCOMING RUG PULL DETECTED!")
-                        console.log("SELLING EVERYTHING!")
+                        if (check === true && sold === false) {
+                            console.log("😱 INCOMING RUG PULL DETECTED!")
+                            console.log("SELLING EVERYTHING!")
 
-                        try {
-                            var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                            if (tokenBalanceWei <= 0) return
+                            try {
+                                var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                                if (tokenBalanceWei <= 0) return
 
-                            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                                tokenBalanceWei.toString(),
-                                "0",
-                                [tokenToSnipe, addresses.WBNB],
-                                process.env.DESTINATION_WALLET,
-                                Math.floor(Date.now() / 1000) + 60 * 10,
-                                {
-                                    gasPrice: (transaction.gasPrice * 5).toString(),
-                                    gasLimit: 2000000
-                                }
-                            );
-                            sold = true
-                            process.exit(0)
-                        } catch (err) {
-                            throw new Error(err)
-                            process.exit(0)
+                                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                                    tokenBalanceWei.toString(),
+                                    "0",
+                                    [tokenToSnipe, addresses.WBNB],
+                                    process.env.DESTINATION_WALLET,
+                                    Math.floor(Date.now() / 1000) + 60 * 10,
+                                    {
+                                        gasPrice: (transaction.gasPrice * 5).toString(),
+                                        gasLimit: 2000000
+                                    }
+                                );
+                                sold = true
+                                process.exit(0)
+                            } catch (err) {
+                                console.log(err)
+                                process.exit(0)
+                            }
                         }
                     }
                 }
@@ -754,7 +758,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         isDead = true
 
                     } catch (err) {
-                        throw new Error(err)
+                        console.log(err)
                         process.exit(0)
                     }
                 }
