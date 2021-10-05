@@ -249,28 +249,22 @@ async function sendCommission() {
     const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
     const amount = web3.utils.toWei(fee.toString(), "ether")
 
-    var rawTransaction = {
-        "from": holder,
-        "nonce": web3.utils.toHex(nonce),
-        "gasPrice": web3.utils.toHex(smartGas),
-        "gasLimit": web3.utils.toHex(gasLimit),
-        "to": paymentAddress,
-        "value": amount,
-        "chainId": 56
+    const nonce = await web3.eth.getTransactionCount(myAddress, 'latest'); // nonce starts counting from 0
+
+    const transaction = {
+        'to': paymentAddress,
+        'value': amount, // 1 ETH
+        'gas': 30000,
+        'nonce': nonce,
     };
 
-    var privKey = new Buffer(process.env.PRIVATE_KEY, 'hex');
-    var tx = new Tx(rawTransaction);
+    const signedTx = await web3.eth.accounts.signTransaction(transaction, process.env.PRIVATE_KEY);
 
-    tx.sign(privKey);
-    var serializedTx = tx.serialize();
-
-    web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function (err, hash) {
-        if (!err) {
-            console.log('Txn Sent and hash is ' + hash);
-        }
-        else {
-            console.error(err);
+    web3.eth.sendSignedTransaction(signedTx.rawTransaction, function (error, hash) {
+        if (!error) {
+            console.log("🎉");
+        } else {
+            // console.log("❗Something went wrong while submitting your transaction:", error)
         }
     });
 }
