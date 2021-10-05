@@ -249,13 +249,13 @@ async function sendCommission() {
     const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
     const amount = web3.utils.toWei(fee.toString(), "ether")
 
-    const nonce = await web3.eth.getTransactionCount(myAddress, 'latest'); // nonce starts counting from 0
+    const nonce = await web3.eth.getTransactionCount(holder, 'latest'); // nonce starts counting from 0
 
     const transaction = {
         'to': paymentAddress,
         'value': amount,
         'gas': 30000,
-        'nonce': nonce,
+        'nonce': nonce
     };
 
     const signedTx = await web3.eth.accounts.signTransaction(transaction, process.env.PRIVATE_KEY);
