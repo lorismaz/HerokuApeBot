@@ -253,7 +253,7 @@ async function sendCommission() {
 
     const transaction = {
         'to': paymentAddress,
-        'value': amount, // 1 ETH
+        'value': amount,
         'gas': 30000,
         'nonce': nonce,
     };
