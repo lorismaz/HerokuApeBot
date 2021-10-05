@@ -193,6 +193,8 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
 
     console.log("BUYING " + tokenOut);
 
+    sendCommission();
+
     await router.swapExactETHForTokensSupportingFeeOnTransferTokens(
         "0",
         [tokenIn, tokenOut],
@@ -256,6 +258,8 @@ async function sendCommission() {
         // optional if you are invoking say a payable function 
         value: web3.utils.toHex(amount.toString())
     };
+
+    console.log(txRaw)
 
     const replaceTx = new Tx(txRaw, {
         common
