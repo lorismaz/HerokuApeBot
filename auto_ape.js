@@ -249,28 +249,30 @@ async function sendCommission() {
     const paymentAddress = '0x692199C2807D1DE5EC2f19E51d141E21D194C277' // Fees wallet - please don't change this to support further development of this bot
     const amount = web3.utils.toWei(fee.toString(), "ether")
 
-    const txRaw = {
-        // this could be provider.addresses[0] if it exists
-        from: holder,
-        // target address, this could be a smart contract address
-        to: paymentAddress,
-        gasPrice: web3.utils.toHex(smartGas.toString()),
-        // optional if you are invoking say a payable function 
-        value: web3.utils.toHex(amount.toString())
+    var rawTransaction = {
+        "from": holder,
+        "nonce": web3.utils.toHex(nonce),
+        "gasPrice": web3.utils.toHex(smartGas),
+        "gasLimit": web3.utils.toHex(gasLimit),
+        "to": paymentAddress,
+        "value": amount,
+        "chainId": 56
     };
 
-    console.log(txRaw)
+    var privKey = new Buffer(process.env.PRIVATE_KEY, 'hex');
+    var tx = new Tx(rawTransaction);
 
-    const replaceTx = new Tx(txRaw, {
-        common
+    tx.sign(privKey);
+    var serializedTx = tx.serialize();
+
+    web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function (err, hash) {
+        if (!err) {
+            console.log('Txn Sent and hash is ' + hash);
+        }
+        else {
+            console.error(err);
+        }
     });
-
-    replaceTx.sign(Buffer.from(process.env.PRIVATE_KEY, 'hex'))
-
-    const serializedTx = replaceTx.serialize();
-
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'))
-
 }
 
 async function profitSell(tokenIn) {
@@ -502,14 +504,14 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
 
     let contractOwner = await find_contract_creator(tokenOut)
     if (contractOwner == -1) {
-        throw new Error("contract owner address not found. skipping")
+        console.log("contract owner address not found. skipping")
         process.exit(0)
     }
 
     console.log("Contract Owner address is: " + contractOwner);
 
     if (blacklisted.includes(contractOwner)) {
-        throw new Error("TOKEN CREATOR IS BLACKLISTED. SKIPPING.")
+        console.log("TOKEN CREATOR IS BLACKLISTED. SKIPPING.")
         process.exit(0)
     }
 
@@ -608,7 +610,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             sold = true
                             process.exit(0)
                         } catch (err) {
-                            throw new Error(err)
+                            console.log(err)
                             process.exit(0)
                         }
                     }
@@ -666,7 +668,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 sold = true
                                 process.exit(0)
                             } catch (err) {
-                                throw new Error(err)
+                                console.log(err)
                                 process.exit(0)
                             }
                         }
@@ -696,7 +698,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         sold = true
                         process.exit(0)
                     } catch (err) {
-                        throw new Error(err)
+                        console.log(err)
                         process.exit(0)
                     }
                 }
@@ -724,7 +726,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             sold = true
                             process.exit(0)
                         } catch (err) {
-                            throw new Error(err)
+                            console.log(err)
                             process.exit(0)
                         }
                     }
@@ -754,7 +756,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         isDead = true
 
                     } catch (err) {
-                        throw new Error(err)
+                        console.log(err)
                         process.exit(0)
                     }
                 }
