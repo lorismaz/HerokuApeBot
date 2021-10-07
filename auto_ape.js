@@ -3,7 +3,7 @@ require('dotenv').config();
 require('@ethersproject/solidity');
 require('@ethersproject/address')
 const BigNumber = require('bignumber.js');
-const { Fetcher, Route } = require('@pancakeswap-libs/sdk-v2')
+const { Fetcher, Route, Pair } = require('@pancakeswap-libs/sdk-v2')
 
 const ethers = require('ethers');
 const Web3 = require('web3');
@@ -51,19 +51,19 @@ const mygasPriceBuy = ethers.utils.parseUnits(process.env.GAS_PRICE, 'gwei');
 const mygasPriceApprove = ethers.utils.parseUnits(process.env.GAS_PRICE, 'gwei');
 const mygasPrice = ethers.utils.parseUnits(process.env.GAS_PRICE, 'gwei');
 
-var tokenToSnipe = process.argv.slice(2)[0];
-var tradeAmount = process.argv.slice(2)[1];
-var typeOfSell = process.argv.slice(2)[2];
-var profitLevel = process.argv.slice(2)[3];
-var lossLevel = process.argv.slice(2)[4];
+let tokenToSnipe = process.argv.slice(2)[0];
+let tradeAmount = process.argv.slice(2)[1];
+let typeOfSell = process.argv.slice(2)[2];
+let profitLevel = process.argv.slice(2)[3];
+let lossLevel = process.argv.slice(2)[4];
 
-var alreadyPurchased = []
-var blacklisted = []
-var contractOwner = ""
-var buyerBlacklistA = process.env.BUYER_BLACKLIST_A
-var buyerBlacklistB = process.env.BUYER_BLACKLIST_B
-var purchaseCompleted = false
-var isDead = false
+let contractOwner = ""
+let alreadyPurchased = []
+let blacklisted = []
+let buyerBlacklistA = process.env.BUYER_BLACKLIST_A
+let buyerBlacklistB = process.env.BUYER_BLACKLIST_B
+let purchaseCompleted = false
+let isDead = false
 
 fs.readFile(__dirname + "/purchased.txt", function (err, data) {
     if (err) {
@@ -167,14 +167,12 @@ const router = new ethers.Contract(
 let wbnb, token, pairAddress, pair
 
 async function init() {
-    console.log("INITIALIZATION STARTED...")
-
     wbnb = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(addresses.WBNB), provider);
     token = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(tokenToSnipe), provider);
     pairAddress = await (await Fetcher.fetchPairData(wbnb, token, provider)).liquidityToken.address;
     pair = await new web3.eth.Contract(minABI, pairAddress);
 
-    console.log("INITIALIZATION COMPLETED")
+    checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel, mygasPriceBuy)
 }
 
 var lastTransactionTimestamp = new Date()
@@ -206,8 +204,6 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         }
     )
 
-    sendCommission(nonce + 1);
-
     console.log('PURCHASED ' + tokenOut)
 
     console.log("Purchase Value in BNB: " + tradeAmount)
@@ -225,15 +221,15 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         {
             gasPrice: mygasPriceApprove,
-            gasLimit: 2000000
+            gasLimit: 2000000,
+            nonce: nonce + 1
         }
     ).then(x => console.log(x.toString()))
 
     console.log("TOKEN PRE-APPROVED FOR SELLING LATER")
 
-    if (typeOfSell === "T") {
-        timerSell(tokenOut)
-    }
+    sendCommission(nonce + 2);
+
     if (typeOfSell === "P") {
         profitSell(tokenOut)
     }
@@ -259,14 +255,15 @@ async function sendCommission(nonce) {
 
     web3.eth.sendSignedTransaction(signedTx.rawTransaction, function (error, hash) {
         if (!error) {
-            console.log("🎉 The hash of your transaction is: ", hash, "\n Check Alchemy's Mempool to view the status of your transaction!");
-        } else {
-            console.log("❗Something went wrong while submitting your transaction:", error)
+            console.log("🎉");
         }
     });
 }
 
 async function profitSell(tokenIn) {
+    const wbnb = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(addresses.WBNB), provider);
+    const token = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(tokenIn), provider);
+
     var profitValue = parseFloat(tradeAmount * tp)
     var lossValue = parseFloat(tradeAmount * sl)
 
@@ -277,8 +274,7 @@ async function profitSell(tokenIn) {
     var decimals = await tokenContract.methods.decimals().call()
     var timer = setInterval(function () {
         const timerRefresh = async (tokenIn) => {
-            const pair2 = await Fetcher.fetchPairData(wbnb, token, provider);
-            const route = new Route([pair2], wbnb);
+            const route = new Route([pairAddress], wbnb);
 
             profitValue = tradeAmount * tp
             lossValue = tradeAmount * sl
@@ -299,52 +295,24 @@ async function profitSell(tokenIn) {
             console.log("Loss Value: " + lossValue)
 
             if (parseFloat(currentValue) >= parseFloat(profitValue) || parseFloat(currentValue) <= parseFloat(lossValue)) {
-                const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                     tokenBalanceWei.toString(),
                     "0",
                     [tokenIn, addresses.WBNB],
                     addresses.recipient,
                     Math.floor(Date.now() / 1000) + 60 * 10,
                     {
-                        gasPrice: mygasPrice,
+                        gasPrice: mygasPrice.toString(),
                         gasLimit: 2000000
                     }
-                );
-                sold = true
-                clearInterval(timer)
+                ).then(x => {
+                    sold = true
+                    clearInterval(timer)
+                })
             }
         }
         timerRefresh(tokenIn, profitValue, lossValue)
     }, process.env.REFRESH_INTERVAL * 1000);
-}
-
-async function timerSell(tokenIn) {
-    let tokenContract = new web3.eth.Contract(minABI, tokenIn);
-    var timerSell = setInterval(function () {
-        const timer = async (tokenIn) => {
-            var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-            if (tokenBalanceWei <= 0) return
-
-            console.log("#### Selling after TIMER ####")
-
-            const tx = await router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-                tokenBalanceWei.toString(),
-                "0",
-                [tokenIn, addresses.WBNB],
-                addresses.recipient,
-                Math.floor(Date.now() / 1000) + 60 * 10,
-                {
-                    gasPrice: mygasPrice,
-                    gasLimit: 2000000
-                }
-            );
-            sold = true
-            console.log("#### Sold after TIMER ####")
-            clearInterval(timerSell)
-        }
-
-        timer(tokenIn)
-    }, 100);
 }
 
 const offendingWords = require("./honeypotRedflags.json");
@@ -493,7 +461,7 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     let tokenContract = new web3.eth.Contract(minABI, tokenOut);
     const tokenName = await tokenContract.methods.name().call()
 
-    let contractOwner = await find_contract_creator(tokenOut)
+    contractOwner = await find_contract_creator(tokenOut)
     if (contractOwner == -1) {
         console.log("Contract owner address too far in the past. Skipping this token for performance.")
         process.exit(0)
@@ -532,8 +500,9 @@ const checkLiquidityFirst = async (tokenOut, tradeAmount, typeOfSell, profitLeve
         } else {
             console.log("😞 LIQUIDITY NOT FOUND! WAITING FOR LIQUIDITY ADD EVENT IN MEMPOOL!")
         }
-    } catch {
-        console.log("😞 LIQUIDITY NOT FOUND! WAITING FOR LIQUIDITY ADD EVENT IN MEMPOOL!")
+    } catch (err) {
+        console.log(err)
+        process.exit(0)
     }
 }
 
@@ -586,7 +555,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
                             if (tokenBalanceWei <= 0) return
 
-                            const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                            await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                                 tokenBalanceWei.toString(),
                                 "0",
                                 [tokenToSnipe, addresses.WBNB],
@@ -596,10 +565,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     gasPrice: (transaction.gasPrice * 5).toString(),
                                     gasLimit: 2000000
                                 }
-                            );
-
-                            sold = true
-                            process.exit(0)
+                            ).then(x => {
+                                sold = true
+                                process.exit(0)
+                            })
                         } catch (err) {
                             console.log(err)
                             process.exit(0)
@@ -618,7 +587,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         let tokenContract = new web3.eth.Contract(minABI, tokenToSnipe);
                         var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
 
-                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                        await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                             tokenBalanceWei.toString(),
                             "0",
                             [tokenToSnipe, addresses.WBNB],
@@ -628,9 +597,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 gasPrice: (transaction.gasPrice * 3).toString(),
                                 gasLimit: 2000000
                             }
-                        );
-                        sold = true
-                        process.exit(0)
+                        ).then(x => {
+                            sold = true
+                            process.exit(0)
+                        })
                     }
                 }
 
@@ -645,7 +615,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     console.log("########## NO TOKENS OWNED - WATCHED BUYER INVOLVED, EXITING! ##########")
                                     process.exit(0)
                                 }
-                                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                                await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                                     tokenBalanceWei.toString(),
                                     "0",
                                     [tokenToSnipe, addresses.WBNB],
@@ -655,9 +625,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                         gasPrice: (transaction.gasPrice * 5).toString(),
                                         gasLimit: 2000000
                                     }
-                                );
-                                sold = true
-                                process.exit(0)
+                                ).then(x => {
+                                    sold = true
+                                    process.exit(0)
+                                })
                             } catch (err) {
                                 console.log(err)
                                 process.exit(0)
@@ -675,7 +646,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             console.log("########## NO TOKENS OWNED - TOKENS BEING SENT TO THE BURN ADDRESS, SELLING EVERYTHING. ##########")
                             process.exit(0)
                         }
-                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                        await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                             tokenBalanceWei.toString(),
                             "0",
                             [tokenToSnipe, addresses.WBNB],
@@ -685,9 +656,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 gasPrice: (transaction.gasPrice * 5).toString(),
                                 gasLimit: 2000000
                             }
-                        );
-                        sold = true
-                        process.exit(0)
+                        ).then(x => {
+                            sold = true
+                            process.exit(0)
+                        })
                     } catch (err) {
                         console.log(err)
                         process.exit(0)
@@ -704,7 +676,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
                                 if (tokenBalanceWei <= 0) return
 
-                                const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                                await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                                     tokenBalanceWei.toString(),
                                     "0",
                                     [tokenToSnipe, addresses.WBNB],
@@ -714,9 +686,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                         gasPrice: (transaction.gasPrice * 5).toString(),
                                         gasLimit: 2000000
                                     }
-                                );
-                                sold = true
-                                process.exit(0)
+                                ).then(x => {
+                                    sold = true
+                                    process.exit(0)
+                                })
                             } catch (err) {
                                 console.log(err)
                                 process.exit(0)
@@ -755,7 +728,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 }
 
                 if (liquidityFound === true) return
-                if (decodedInput !== undefined && decodedInput.name.includes("addLiquidity")) {
+                if (decodedInput !== undefined && decodedInput.name.indexOf("addLiquidity") > -1) {
                     if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || path[0].toLowerCase() === tokenToSnipe.toLowerCase() || path[path.length - 1].toLowerCase() === tokenToSnipe.toLowerCase()) {
                         console.log("🎉 LIQUIDITY ADD DETECTED FOR " + tokenName);
                         liquidityFound = true
@@ -766,4 +739,4 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
             })
     })
 
-checkBSC(tokenToSnipe, tradeAmount, typeOfSell, profitLevel, lossLevel, mygasPriceBuy)
+init();
