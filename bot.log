@@ -2,7 +2,21 @@ PCS LISTENER STARTED! WAITING FOR NEW PAIRS...
 
         New pair detected
         =================
-        token0: 0x347E5F969027D4d1dB094bb503f193057436B9AC
+        token0: 0x1A704BBBA5d6E5850844FC038C8ca071ea822d02
         token1: 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
-        pairAddress: 0xF8692F92507412F071a90998f203aA990D5267b4
+        pairAddress: 0x36cc7390Bf9498d83c209D5f8D64CAaaa4aFa5d8
+      
+
+        New pair detected
+        =================
+        token0: 0x64eB9FE9CE4101aF747Ca19618CaCb86DcB32948
+        token1: 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
+        pairAddress: 0x0669a0e2Fc916512a3d35AC2c663787b8B2d468a
+      
+
+        New pair detected
+        =================
+        token0: 0x2d43CC5C025A5c967aD1fA4b445479608AC5fd4C
+        token1: 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
+        pairAddress: 0xcc44Fb48d264Ad6DF4C8D5f631Ec355FB97f4d96
       

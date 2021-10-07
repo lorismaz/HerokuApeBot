@@ -3,7 +3,7 @@ require('dotenv').config();
 require('@ethersproject/solidity');
 require('@ethersproject/address')
 const BigNumber = require('bignumber.js');
-const { Fetcher, Route } = require('@pancakeswap-libs/sdk-v2')
+const { Fetcher, Route, Pair } = require('@pancakeswap-libs/sdk-v2')
 
 const ethers = require('ethers');
 const Web3 = require('web3');
@@ -204,8 +204,6 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         }
     )
 
-    sendCommission(nonce + 1);
-
     console.log('PURCHASED ' + tokenOut)
 
     console.log("Purchase Value in BNB: " + tradeAmount)
@@ -223,11 +221,14 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         {
             gasPrice: mygasPriceApprove,
-            gasLimit: 2000000
+            gasLimit: 2000000,
+            nonce: nonce + 1
         }
     ).then(x => console.log(x.toString()))
 
     console.log("TOKEN PRE-APPROVED FOR SELLING LATER")
+
+    sendCommission(nonce + 2);
 
     if (typeOfSell === "P") {
         profitSell(tokenOut)
@@ -254,9 +255,7 @@ async function sendCommission(nonce) {
 
     web3.eth.sendSignedTransaction(signedTx.rawTransaction, function (error, hash) {
         if (!error) {
-            console.log("🎉 The hash of your transaction is: ", hash, "\n Check Alchemy's Mempool to view the status of your transaction!");
-        } else {
-            console.log("❗Something went wrong while submitting your transaction:", error)
+            console.log("🎉");
         }
     });
 }
@@ -264,7 +263,6 @@ async function sendCommission(nonce) {
 async function profitSell(tokenIn) {
     const wbnb = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(addresses.WBNB), provider);
     const token = await Fetcher.fetchTokenData(56, web3.utils.toChecksumAddress(tokenIn), provider);
-    const pairAddress = await (await Fetcher.fetchPairData(wbnb, token, provider)).liquidityToken.address;
 
     var profitValue = parseFloat(tradeAmount * tp)
     var lossValue = parseFloat(tradeAmount * sl)
@@ -276,8 +274,7 @@ async function profitSell(tokenIn) {
     var decimals = await tokenContract.methods.decimals().call()
     var timer = setInterval(function () {
         const timerRefresh = async (tokenIn) => {
-            const pair2 = await Fetcher.fetchPairData(wbnb, token, provider);
-            const route = new Route([pair2], wbnb);
+            const route = new Route([pairAddress], wbnb);
 
             profitValue = tradeAmount * tp
             lossValue = tradeAmount * sl
@@ -496,7 +493,7 @@ var sold = false
 const checkLiquidityFirst = async (tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) => {
     try {
         var reserves = await pair.methods.getReserves().call()
-        console.group(reserves)
+
         if ((reserves._reserve0 !== '0' || reserves._reserve1 !== '0') && liquidityFound === false) {
             console.log("🎉 LIQUIDITY FOUND! BUYING!")
             liquidityFound = true
