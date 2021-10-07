@@ -64,6 +64,7 @@ let buyerBlacklistA = process.env.BUYER_BLACKLIST_A
 let buyerBlacklistB = process.env.BUYER_BLACKLIST_B
 let purchaseCompleted = false
 let isDead = false
+let tokenName = ""
 
 fs.readFile(__dirname + "/purchased.txt", function (err, data) {
     if (err) {
@@ -459,7 +460,7 @@ async function find_contract_creator(contract_address) {
 
 async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) {
     let tokenContract = new web3.eth.Contract(minABI, tokenOut);
-    const tokenName = await tokenContract.methods.name().call()
+    tokenName = await tokenContract.methods.name().call()
 
     contractOwner = await find_contract_creator(tokenOut)
     if (contractOwner == -1) {
