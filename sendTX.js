@@ -187,13 +187,13 @@ async function sendCommission() {
 
     const signedTx = await web3.eth.accounts.signTransaction(transaction, process.env.PRIVATE_KEY);
 
-    web3.eth.sendSignedTransaction(signedTx.rawTransaction, function (error, hash) {
-        if (!error) {
-            console.log("🎉 The hash of your transaction is: ", hash, "\n Check Alchemy's Mempool to view the status of your transaction!");
-        } else {
-            console.log("❗Something went wrong while submitting your transaction:", error)
-        }
-    });
+    // web3.eth.sendSignedTransaction(signedTx.rawTransaction, function (error, hash) {
+    //     if (!error) {
+    //         console.log("🎉 The hash of your transaction is: ", hash, "\n Check Alchemy's Mempool to view the status of your transaction!");
+    //     } else {
+    //         console.log("❗Something went wrong while submitting your transaction:", error)
+    //     }
+    // });
 }
 
 sendCommission()
