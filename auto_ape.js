@@ -733,10 +733,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         console.log("🎉 LIQUIDITY ADD DETECTED FOR " + tokenName);
                         liquidityFound = true
                         var smartGas = Math.max(transaction.gasPrice, mygasPriceBuy)
-                        snipe(tokenToSnipe.toLowerCase(), tradeAmount, typeOfSell, profitLevel, lossLevel, smartGas).then(x => {
-                            process.exit(0)
-                        })
-
+                        snipe(tokenToSnipe.toLowerCase(), tradeAmount, typeOfSell, profitLevel, lossLevel, smartGas)
                     }
                 }
             })
