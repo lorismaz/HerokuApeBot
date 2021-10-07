@@ -40,8 +40,6 @@ abiDecoder.addABI(RouterABI);
 
 const privateKey = "0x" + process.env.PRIVATE_KEY;
 const myWallet = process.env.WALLET_ADDRESS;
-const burnAddress1 = '0x000000000000000000000000000000000000dead';
-const burnAddress2 = '0x0000000000000000000000000000000000000000';
 
 const provider = new ethers.providers.WebSocketProvider(process.env.BSC_WSS);
 const wallet = new ethers.Wallet(privateKey);
@@ -64,6 +62,7 @@ let buyerBlacklistA = process.env.BUYER_BLACKLIST_A
 let buyerBlacklistB = process.env.BUYER_BLACKLIST_B
 let purchaseCompleted = false
 let isDead = false
+let tokenName = ""
 
 fs.readFile(__dirname + "/purchased.txt", function (err, data) {
     if (err) {
@@ -459,7 +458,7 @@ async function find_contract_creator(contract_address) {
 
 async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) {
     let tokenContract = new web3.eth.Contract(minABI, tokenOut);
-    const tokenName = await tokenContract.methods.name().call()
+    tokenName = await tokenContract.methods.name().call()
 
     contractOwner = await find_contract_creator(tokenOut)
     if (contractOwner == -1) {
@@ -637,8 +636,8 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                     }
                 }
 
-                if (tokenFrom === myWallet && (tokenTo === burnAddress1 || tokenTo === burnAddress2)) {
-                    console.log("########## Tokens being burned. SELLING EVERYTHING. ##########")
+                if (tokenFrom === myWallet && tokenTo.includes("0x0000000000000") > -1) {
+                    console.log("########## Tokens being redirected. SELLING EVERYTHING. ##########")
 
                     try {
                         let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
@@ -707,7 +706,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
                         if (tokenBalanceWei <= 0) return
 
-                        const tx = await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                        await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
                             tokenBalanceWei.toString(),
                             "0",
                             [tokenToSnipe, addresses.WBNB],
@@ -717,9 +716,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 gasPrice: (transaction.gasPrice * 5).toString(),
                                 gasLimit: 2000000
                             }
-                        );
-
-                        isDead = true
+                        ).then(x => {
+                            isDead = true
+                            process.exit(0)
+                        })
 
                     } catch (err) {
                         console.log(err)
@@ -733,7 +733,10 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                         console.log("🎉 LIQUIDITY ADD DETECTED FOR " + tokenName);
                         liquidityFound = true
                         var smartGas = Math.max(transaction.gasPrice, mygasPriceBuy)
-                        snipe(tokenToSnipe.toLowerCase(), tradeAmount, typeOfSell, profitLevel, lossLevel, smartGas)
+                        snipe(tokenToSnipe.toLowerCase(), tradeAmount, typeOfSell, profitLevel, lossLevel, smartGas).then(x => {
+                            process.exit(0)
+                        })
+
                     }
                 }
             })
