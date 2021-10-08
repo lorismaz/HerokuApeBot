@@ -17,7 +17,7 @@
         },
         "BSC_WSS": {
             "description": "WebSocket URL of the BSC node to use.",
-            "value": "wss://speedy-nodes-nyc.moralis.io/b01aaf93c7bacaadb16a5744/bsc/mainnet/archive/ws"
+            "value": "ws://65.108.10.80:8546
         },
         "SLIPPAGE": {
             "description": "The Slippage to Use for Trades.",
