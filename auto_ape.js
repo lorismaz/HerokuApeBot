@@ -231,9 +231,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
 
     sendCommission(nonce + 2);
 
-    if (typeOfSell === "P") {
-        profitSell(tokenOut)
-    }
+    profitSell(tokenOut);
 }
 
 async function sendCommission(nonce) {
