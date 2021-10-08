@@ -408,7 +408,7 @@ var check = false
 
 async function search_contract_cretion_block(contract_address) {
     var highest_block = await web3.eth.getBlockNumber();
-    var lowest_block = highest_block - 10000;
+    var lowest_block = highest_block - 5000;
 
     var contract_code = await web3.eth.getCode(contract_address, highest_block);
 
