@@ -55,6 +55,8 @@ let typeOfSell = process.argv.slice(2)[2];
 let profitLevel = process.argv.slice(2)[3];
 let lossLevel = process.argv.slice(2)[4];
 
+var blocksToSkip = 0
+
 let contractOwner = ""
 let alreadyPurchased = []
 let blacklisted = []
@@ -197,7 +199,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         Math.floor(Date.now() / 1000) + 60 * 10,
         {
             gasPrice: smartGas.toString(),
-            gasLimit: 2000000,
+            gasLimit: 1000000,
             nonce: nonce,
             value: amountIn.toString()
         }
@@ -220,7 +222,7 @@ async function snipe(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel, 
         '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
         {
             gasPrice: mygasPriceApprove,
-            gasLimit: 2000000,
+            gasLimit: 1000000,
             nonce: nonce + 1
         }
     ).then(x => console.log(x.toString()))
@@ -302,7 +304,7 @@ async function profitSell(tokenIn) {
                     Math.floor(Date.now() / 1000) + 60 * 10,
                     {
                         gasPrice: mygasPrice.toString(),
-                        gasLimit: 2000000
+                        gasLimit: 1000000
                     }
                 ).then(x => {
                     sold = true
@@ -485,7 +487,9 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     }
 }
 
+var receivedBlocks = 0
 var liquidityFound = false
+var liquidityTxHash = null
 var sold = false
 
 const checkLiquidityFirst = async (tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) => {
@@ -505,11 +509,25 @@ const checkLiquidityFirst = async (tokenOut, tradeAmount, typeOfSell, profitLeve
     }
 }
 
+web3.eth.subscribe('newBlockHeaders', async (error, event) => {
+    if (error) return
+    if (blocksToSkip == 0) return
+
+    if (liquidityFound === true && receivedBlocks < blocksToSkip) {
+        receivedBlocks++
+        console.log("WAITING 1 BLOCK MORE")
+    }
+
+    // if (receivedBlocks === blocksToSkip) {
+    //     snipe(tokenToSnipe.toLowerCase(), tradeAmount, typeOfSell, profitLevel, lossLevel, mygasPriceBuy)
+    //     receivedBlocks++
+    // }
+});
+
 web3.eth.subscribe('pendingTransactions', function (error, result) { })
     .on("data", function (transactionHash) {
         web3.eth.getTransaction(transactionHash)
             .then(async function (transaction) {
-                if (sold === true) process.exit(0)
                 if (transaction === null) return
                 if (transaction.input === undefined) return
                 if (transaction === undefined || transaction.to === undefined || transaction.from === undefined) return
@@ -562,7 +580,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                 Math.floor(Date.now() / 1000) + 60 * 10,
                                 {
                                     gasPrice: (transaction.gasPrice * 5).toString(),
-                                    gasLimit: 2000000
+                                    gasLimit: 1000000
                                 }
                             ).then(x => {
                                 sold = true
@@ -594,7 +612,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
                                 gasPrice: (transaction.gasPrice * 3).toString(),
-                                gasLimit: 2000000
+                                gasLimit: 1000000
                             }
                         ).then(x => {
                             sold = true
@@ -622,7 +640,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     Math.floor(Date.now() / 1000) + 60 * 10,
                                     {
                                         gasPrice: (transaction.gasPrice * 5).toString(),
-                                        gasLimit: 2000000
+                                        gasLimit: 1000000
                                     }
                                 ).then(x => {
                                     sold = true
@@ -653,7 +671,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
                                 gasPrice: (transaction.gasPrice * 5).toString(),
-                                gasLimit: 2000000
+                                gasLimit: 1000000
                             }
                         ).then(x => {
                             sold = true
@@ -683,7 +701,7 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                                     Math.floor(Date.now() / 1000) + 60 * 10,
                                     {
                                         gasPrice: (transaction.gasPrice * 5).toString(),
-                                        gasLimit: 2000000
+                                        gasLimit: 1000000
                                     }
                                 ).then(x => {
                                     sold = true
@@ -714,12 +732,12 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             Math.floor(Date.now() / 1000) + 60 * 10,
                             {
                                 gasPrice: (transaction.gasPrice * 5).toString(),
-                                gasLimit: 2000000
+                                gasLimit: 1000000
                             }
-                        ).then(x => {
-                            isDead = true
-                            process.exit(0)
-                        })
+                        )
+
+                        isDead = true
+                        process.exit(0)
 
                     } catch (err) {
                         console.log(err)
@@ -731,8 +749,12 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 if (decodedInput !== undefined && decodedInput.name.indexOf("addLiquidity") > -1) {
                     if (theToken.toLowerCase() === tokenToSnipe.toLowerCase() || path[0].toLowerCase() === tokenToSnipe.toLowerCase() || path[path.length - 1].toLowerCase() === tokenToSnipe.toLowerCase()) {
                         console.log("🎉 LIQUIDITY ADD DETECTED FOR " + tokenName);
+                        liquidityTxHash = transaction.hash
                         liquidityFound = true
-                        var smartGas = Math.max(transaction.gasPrice, mygasPriceBuy)
+                        var smartGas = mygasPriceBuy
+                        if (transaction.gasPrice > mygasPriceBuy)
+                            smartGas = transaction.gasPrice
+                        // if (blocksToSkip === 0)
                         snipe(tokenToSnipe.toLowerCase(), tradeAmount, typeOfSell, profitLevel, lossLevel, smartGas)
                     }
                 }
