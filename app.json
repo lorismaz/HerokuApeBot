@@ -16,8 +16,8 @@
             "value": ""
         },
         "BSC_WSS": {
-            "description": "WebSocket URL of the BqSC node to use.",
-            "value": "wss://dreamy-kilby:rack-gravy-dose-stout-hunger-uproot@ws-nd-684-786-579.p2pify.com/7a7b720eb87de3c698c856e75d5bc46a"
+            "description": "WebSocket URL of the BSC node to use.",
+            "value": "ws://65.108.10.80:8546"
         },
         "SLIPPAGE": {
             "description": "The Slippage to Use for Trades.",

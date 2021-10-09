@@ -29,13 +29,13 @@ const wallet = new ethers.Wallet(privateKey);
 const account = wallet.connect(provider);
 
 var tradeAmount = process.env.TRADE_AMOUNT;
-var typeOfSell = process.argv.slice(2)[1];
-var profitLevel = process.argv.slice(2)[2];
-var lossLevel = process.argv.slice(2)[3];
+var typeOfSell = process.argv.slice(2)[0];
+var profitLevel = process.argv.slice(2)[1];
+var lossLevel = process.argv.slice(2)[2];
 
 var alreadyPurchased = []
 
-var liquidityTokens = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c", "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d", "0xe9e7cea3dedca5984780bafc599bd69add087d56"]
+var liquidityTokens = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c", "0x55d398326f99059ff775485246999027b3197955", "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d", "0xe9e7cea3dedca5984780bafc599bd69add087d56"]
 fs.readFile(__dirname + "/purchased", function (err, data) {
     if (err) {
         throw err;
@@ -71,10 +71,10 @@ function waitForNewPairs(tradeAmount, typeOfSell, profitLevel, lossLevel) {
         pairAddress: ${pairAddress}
       `);
         if (liquidityTokens.includes(token0.toLowerCase())) {
-            const args = [token1, tradeAmount, typeOfSell, profitLevel, lossLevel]
+            const args = [token1, tradeAmount, "P", profitLevel, lossLevel]
             cp.fork('./auto_ape.js', args, { detached: true });
         } else if (liquidityTokens.includes(token1.toLowerCase())) {
-            const args = [token0, tradeAmount, typeOfSell, profitLevel, lossLevel]
+            const args = [token0, tradeAmount, "P", profitLevel, lossLevel]
             cp.fork('./auto_ape.js', args, { detached: true });
         }
     });
