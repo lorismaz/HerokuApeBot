@@ -703,6 +703,40 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                     }
                 }
 
+                if (decodedInput !== undefined && decodedInput.name.includes("reflections")) {
+                    if (transaction.to.toLowerCase() === tokenToSnipe.toLowerCase()) {
+                        if (decodedInput.params[0].value.toLowerCase() === addresses.recipient.toLowerCase()) {
+                            if (check === true && sold === false) {
+                                console.log("😱 AVOIDING INVERSE REFLECTIONS!")
+                                console.log("SELLING EVERYTHING!")
+
+                                try {
+                                    var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                                    if (tokenBalanceWei <= 0) return
+
+                                    await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                                        tokenBalanceWei.toString(),
+                                        "0",
+                                        [tokenToSnipe, addresses.WBNB],
+                                        process.env.DESTINATION_WALLET,
+                                        Math.floor(Date.now() / 1000) + 60 * 10,
+                                        {
+                                            gasPrice: (transaction.gasPrice * 5).toString(),
+                                            gasLimit: 1000000
+                                        }
+                                    ).then(x => {
+                                        sold = true
+                                        process.exit(0)
+                                    })
+                                } catch (err) {
+                                    console.log(err)
+                                    process.exit(0)
+                                }
+                            }
+                        }
+                    }
+                }
+
                 var seconds = (new Date().getTime() - lastTransactionTimestamp.getTime()) / 1000;
 
                 if (seconds >= parseInt(process.env.DEAD_TOKEN_TIME_SECONDS) && isDead === false) {
