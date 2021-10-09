@@ -35,7 +35,7 @@ var lossLevel = process.argv.slice(2)[2];
 
 var alreadyPurchased = []
 
-var liquidityTokens = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c"]
+var liquidityTokens = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c", "0x55d398326f99059ff775485246999027b3197955", "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d", "0xe9e7cea3dedca5984780bafc599bd69add087d56"]
 fs.readFile(__dirname + "/purchased", function (err, data) {
     if (err) {
         throw err;
