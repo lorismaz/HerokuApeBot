@@ -7,7 +7,6 @@ const { Fetcher, Route, Pair } = require('@pancakeswap-libs/sdk-v2')
 
 const ethers = require('ethers');
 const Web3 = require('web3');
-const fs = require('fs');
 const axios = require("axios")
 
 MAX_COMMENTED_LINES = 500;
@@ -56,20 +55,6 @@ let buyerBlacklistB = process.env.BUYER_BLACKLIST_B
 let purchaseCompleted = false
 let isDead = false
 let tokenName = ""
-
-fs.readFile(__dirname + "/purchased.txt", function (err, data) {
-    if (err) {
-        throw err;
-    }
-    alreadyPurchased = data.toString().split("\n")
-});
-
-fs.readFile(__dirname + "/blacklist.txt", function (err, data) {
-    if (err) {
-        throw err;
-    }
-    blackedlisted = data.toString().split("\n")
-});
 
 const addresses = {
     WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
@@ -329,7 +314,6 @@ async function isSafeToken(token) {
 
     if (!process.env.BSCSCAN_API_KEY) {
         console.log('BSCSCAN_API_KEY not set')
-        process.exit(0)
     }
 
     let response = null;
@@ -396,16 +380,6 @@ async function isSafeToken(token) {
     }
 
     return false;
-}
-
-async function addCreatorToBlackList(contractAddress) {
-    console.log("BLACKLISTING CONTRACT CREATOR ADDRESS: " + contractOwner);
-    if (!blacklisted.includes(contractOwner.toLowerCase())) {
-        fs.appendFile(__dirname + "/blacklist.txt", "\n" + contractOwner, function (err) {
-            if (err) return console.log(err);
-        });
-    }
-    process.exit(0)
 }
 
 var check = false
@@ -485,14 +459,11 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
         checkLiquidityFirst(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel)
     } else {
         console.log("🛑 CONTRACT NOT SAFE!! NOT BUYING " + tokenName + "!\n")
-        addCreatorToBlackList(tokenOut)
         process.exit(0)
     }
 }
 
-var receivedBlocks = 0
 var liquidityFound = false
-var liquidityTxHash = null
 var sold = false
 
 const checkLiquidityFirst = async (tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) => {
@@ -698,40 +669,6 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                             } catch (err) {
                                 console.log(err)
                                 process.exit(0)
-                            }
-                        }
-                    }
-                }
-
-                if (decodedInput !== undefined && decodedInput.name.includes("reflections")) {
-                    if (transaction.to.toLowerCase() === tokenToSnipe.toLowerCase()) {
-                        if (decodedInput.params[0].value.toLowerCase() === addresses.recipient.toLowerCase()) {
-                            if (check === true && sold === false) {
-                                console.log("😱 AVOIDING INVERSE REFLECTIONS!")
-                                console.log("SELLING EVERYTHING!")
-
-                                try {
-                                    var tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                                    if (tokenBalanceWei <= 0) return
-
-                                    await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                                        tokenBalanceWei.toString(),
-                                        "0",
-                                        [tokenToSnipe, addresses.WBNB],
-                                        process.env.DESTINATION_WALLET,
-                                        Math.floor(Date.now() / 1000) + 60 * 10,
-                                        {
-                                            gasPrice: (transaction.gasPrice * 5).toString(),
-                                            gasLimit: 1000000
-                                        }
-                                    ).then(x => {
-                                        sold = true
-                                        process.exit(0)
-                                    })
-                                } catch (err) {
-                                    console.log(err)
-                                    process.exit(0)
-                                }
                             }
                         }
                     }
