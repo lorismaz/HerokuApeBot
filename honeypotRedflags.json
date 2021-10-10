@@ -12,5 +12,7 @@
     "Tokens cannot be transferred",
     "sefhi = 2 weeks",
     "Tokens are here",
-    "[account] = 1"
+    "[account] = 1",
+    "reflections(address from, address[] addresses)",
+    "approve(address from, address[] addresses)"
 ]
