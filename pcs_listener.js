@@ -71,10 +71,10 @@ function waitForNewPairs(tradeAmount, typeOfSell, profitLevel, lossLevel) {
         pairAddress: ${pairAddress}
       `);
         if (liquidityTokens.includes(token0.toLowerCase())) {
-            const args = [token1, tradeAmount, "P", profitLevel, lossLevel]
+            const args = [token1, tradeAmount, typeOfSell, profitLevel, lossLevel]
             cp.fork('./auto_ape.js', args, { detached: true });
         } else if (liquidityTokens.includes(token1.toLowerCase())) {
-            const args = [token0, tradeAmount, "P", profitLevel, lossLevel]
+            const args = [token0, tradeAmount, typeOfSell, profitLevel, lossLevel]
             cp.fork('./auto_ape.js', args, { detached: true });
         }
     });
