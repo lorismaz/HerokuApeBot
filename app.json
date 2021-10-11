@@ -70,6 +70,14 @@
         "NODE_OPTIONS": {
             "description": "Don't change this!",
             "value": "--max_old_space_size=460"
+        },
+        "PROFIT_TARGET": {
+            "description": "First profit target, before trailing profit is enabled",
+            "value": "1.2"
+        },
+        "LOSS_TARGET": {
+            "description": "Stop loss",
+            "value": "0.6"
         }
     },
     "formation": {
