@@ -42,8 +42,8 @@ const mygasPrice = ethers.utils.parseUnits(process.env.GAS_PRICE, 'gwei');
 let tokenToSnipe = process.argv.slice(2)[0];
 let tradeAmount = process.argv.slice(2)[1];
 let typeOfSell = "P"
-let profitLevel = 1.2
-let lossLevel = 0.8
+let profitLevel = process.env.PROFIT_TARGET;
+let lossLevel = process.env.LOSS_TARGET;
 
 var blocksToSkip = 0
 
