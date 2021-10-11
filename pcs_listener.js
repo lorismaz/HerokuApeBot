@@ -1,14 +1,4 @@
 #!/usr/bin/env node
-var fs = require('fs');
-var util = require('util');
-var log_file = fs.createWriteStream(__dirname + '/bot.log', { flags: 'w' });
-var log_stdout = process.stdout;
-
-console.log = function (d) { //
-    log_file.write(util.format(d) + '\n');
-    log_stdout.write(util.format(d) + '\n');
-};
-
 require('dotenv').config();
 require('@ethersproject/solidity');
 require('@ethersproject/address')
@@ -29,19 +19,11 @@ const wallet = new ethers.Wallet(privateKey);
 const account = wallet.connect(provider);
 
 var tradeAmount = process.env.TRADE_AMOUNT;
-var typeOfSell = process.argv.slice(2)[0];
-var profitLevel = process.argv.slice(2)[1];
-var lossLevel = process.argv.slice(2)[2];
-
-var alreadyPurchased = []
+var typeOfSell = "P"
+let profitLevel = process.env.PROFIT_TARGET
+let lossLevel = process.env.LOSS_TARGET
 
 var liquidityTokens = ["0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c", "0x55d398326f99059ff775485246999027b3197955", "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d", "0xe9e7cea3dedca5984780bafc599bd69add087d56"]
-fs.readFile(__dirname + "/purchased", function (err, data) {
-    if (err) {
-        throw err;
-    }
-    alreadyPurchased = data.toString().split("\n")
-});
 
 const addresses = {
     WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',

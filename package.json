@@ -1,6 +1,6 @@
 {
   "engines": {
-    "node": "14.x"
+    "node": "12.22.5"
   },
   "name": "callsbot",
   "version": "1.0.0",

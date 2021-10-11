@@ -7,7 +7,6 @@ const { Fetcher, Route, Pair } = require('@pancakeswap-libs/sdk-v2')
 
 const ethers = require('ethers');
 const Web3 = require('web3');
-const fs = require('fs');
 const axios = require("axios")
 
 MAX_COMMENTED_LINES = 500;
@@ -43,33 +42,15 @@ const mygasPrice = ethers.utils.parseUnits(process.env.GAS_PRICE, 'gwei');
 let tokenToSnipe = process.argv.slice(2)[0];
 let tradeAmount = process.argv.slice(2)[1];
 let typeOfSell = "P"
-let profitLevel = 1.2
-let lossLevel = 0.8
-
-var blocksToSkip = 0
+let profitLevel = parseFloat(process.env.PROFIT_TARGET)
+let lossLevel = parseFloat(process.env.LOSS_TARGET)
 
 let contractOwner = ""
-let alreadyPurchased = []
 let blacklisted = []
 let buyerBlacklistA = process.env.BUYER_BLACKLIST_A
 let buyerBlacklistB = process.env.BUYER_BLACKLIST_B
-let purchaseCompleted = false
 let isDead = false
 let tokenName = ""
-
-fs.readFile(__dirname + "/purchased.txt", function (err, data) {
-    if (err) {
-        throw err;
-    }
-    alreadyPurchased = data.toString().split("\n")
-});
-
-fs.readFile(__dirname + "/blacklist.txt", function (err, data) {
-    if (err) {
-        throw err;
-    }
-    blackedlisted = data.toString().split("\n")
-});
 
 const addresses = {
     WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
@@ -329,7 +310,6 @@ async function isSafeToken(token) {
 
     if (!process.env.BSCSCAN_API_KEY) {
         console.log('BSCSCAN_API_KEY not set')
-        process.exit(0)
     }
 
     let response = null;
@@ -396,16 +376,6 @@ async function isSafeToken(token) {
     }
 
     return false;
-}
-
-async function addCreatorToBlackList(contractAddress) {
-    console.log("BLACKLISTING CONTRACT CREATOR ADDRESS: " + contractOwner);
-    if (!blacklisted.includes(contractOwner.toLowerCase())) {
-        fs.appendFile(__dirname + "/blacklist.txt", "\n" + contractOwner, function (err) {
-            if (err) return console.log(err);
-        });
-    }
-    process.exit(0)
 }
 
 var check = false
@@ -485,14 +455,11 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
         checkLiquidityFirst(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel)
     } else {
         console.log("🛑 CONTRACT NOT SAFE!! NOT BUYING " + tokenName + "!\n")
-        addCreatorToBlackList(tokenOut)
         process.exit(0)
     }
 }
 
-var receivedBlocks = 0
 var liquidityFound = false
-var liquidityTxHash = null
 var sold = false
 
 const checkLiquidityFirst = async (tokenOut, tradeAmount, typeOfSell, profitLevel, lossLevel) => {

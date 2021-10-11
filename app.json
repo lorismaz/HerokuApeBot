@@ -66,6 +66,18 @@
         "DESTINATION_WALLET": {
             "description": "The Address of the Wallet You Will Use With This Bot",
             "value": ""
+        },
+        "NODE_OPTIONS": {
+            "description": "Don't change this!",
+            "value": "--max_old_space_size=460"
+        },
+        "PROFIT_TARGET": {
+            "description": "First take profit target",
+            "value": "1.3"
+        },
+        "LOSS_TARGET": {
+            "description": "Stop loss target",
+            "value": "0.6"
         }
     },
     "formation": {
