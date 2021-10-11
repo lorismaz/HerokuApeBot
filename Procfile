@@ -1,1 +1,1 @@
-worker: npm run start
+worker: node pcs_listener.js
