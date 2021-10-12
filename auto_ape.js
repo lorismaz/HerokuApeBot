@@ -2,8 +2,11 @@
 require('dotenv').config();
 require('@ethersproject/solidity');
 require('@ethersproject/address')
+
+const offendingWords = require("./honeypotRedflags.json");
+
 const BigNumber = require('bignumber.js');
-const { Fetcher, Route, Pair } = require('@pancakeswap-libs/sdk-v2')
+const { Fetcher, Route } = require('@pancakeswap-libs/sdk-v2')
 
 const ethers = require('ethers');
 const Web3 = require('web3');
@@ -117,15 +120,6 @@ let minABI = [
         "type": "function"
     }
 ];
-
-const factory = new ethers.Contract(
-    addresses.factory,
-    [
-        'function getPair(address tokenA, address tokenB) external view returns (address pair)',
-        'event PairCreated(address indexed token0, address indexed token1, address pair, uint)'
-    ],
-    account
-);
 
 const router = new ethers.Contract(
     addresses.router,
@@ -301,8 +295,6 @@ async function profitSell(tokenIn) {
     }, process.env.REFRESH_INTERVAL * 1000);
 }
 
-const offendingWords = require("./honeypotRedflags.json");
-
 async function isSafeToken(token) {
     if (process.env.BSSCAN_CHECK !== 'true') {
         return true;
@@ -435,18 +427,18 @@ async function checkBSC(tokenOut, tradeAmount, typeOfSell, profitLevel, lossLeve
     let tokenContract = new web3.eth.Contract(minABI, tokenOut);
     tokenName = await tokenContract.methods.name().call()
 
-    contractOwner = await find_contract_creator(tokenOut)
-    if (contractOwner == -1) {
-        console.log("Contract owner address too far in the past. Skipping this token for performance.")
-        process.exit(0)
-    }
+    // contractOwner = await find_contract_creator(tokenOut)
+    // if (contractOwner == -1) {
+    //     console.log("Contract owner address too far in the past. Skipping this token for performance.")
+    //     process.exit(0)
+    // }
 
-    console.log("Contract Owner address is: " + contractOwner);
+    // console.log("Contract Owner address is: " + contractOwner);
 
-    if (blacklisted.includes(contractOwner)) {
-        console.log("TOKEN CREATOR IS BLACKLISTED. SKIPPING.")
-        process.exit(0)
-    }
+    // if (blacklisted.includes(contractOwner)) {
+    //     console.log("TOKEN CREATOR IS BLACKLISTED. SKIPPING.")
+    //     process.exit(0)
+    // }
 
     check = await isSafeToken(tokenOut)
 
@@ -519,34 +511,34 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                 //                 console.log("########## Transaction From: " + tokenFrom)
                 //                 console.log("########## Transaction To: " + tokenTo)
 
-                if (transaction.from.toLowerCase() === contractOwner.toLowerCase()) {
-                    if (decodedInput !== undefined && decodedInput.name.includes("swap")) {
-                        console.log("😱 CONTRACT OWNER IS SELLING ITS OWN TOKENS. SELLING EVERYTHING. ##########")
+                // if (transaction.from.toLowerCase() === contractOwner.toLowerCase()) {
+                //     if (decodedInput !== undefined && decodedInput.name.includes("swap")) {
+                //         console.log("😱 CONTRACT OWNER IS SELLING ITS OWN TOKENS. SELLING EVERYTHING. ##########")
 
-                        try {
-                            let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                            if (tokenBalanceWei <= 0) return
+                //         try {
+                //             let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                //             if (tokenBalanceWei <= 0) return
 
-                            await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                                tokenBalanceWei.toString(),
-                                "0",
-                                [tokenToSnipe, addresses.WBNB],
-                                process.env.DESTINATION_WALLET,
-                                Math.floor(Date.now() / 1000) + 60 * 10,
-                                {
-                                    gasPrice: (transaction.gasPrice * 5).toString(),
-                                    gasLimit: 1000000
-                                }
-                            ).then(x => {
-                                sold = true
-                                process.exit(0)
-                            })
-                        } catch (err) {
-                            console.log(err)
-                            process.exit(0)
-                        }
-                    }
-                }
+                //             await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                //                 tokenBalanceWei.toString(),
+                //                 "0",
+                //                 [tokenToSnipe, addresses.WBNB],
+                //                 process.env.DESTINATION_WALLET,
+                //                 Math.floor(Date.now() / 1000) + 60 * 10,
+                //                 {
+                //                     gasPrice: (transaction.gasPrice * 5).toString(),
+                //                     gasLimit: 1000000
+                //                 }
+                //             ).then(x => {
+                //                 sold = true
+                //                 process.exit(0)
+                //             })
+                //         } catch (err) {
+                //             console.log(err)
+                //             process.exit(0)
+                //         }
+                //     }
+                // }
 
                 if (tokenFrom === buyerBlacklistA || tokenFrom === buyerBlacklistB || tokenTo === buyerBlacklistA || tokenTo === buyerBlacklistB) {
                     console.log("########## TEST - WATCHED BUYER IS MOVING TOKENS. SELLING EVERYTHING. - TEST ##########")
@@ -576,38 +568,38 @@ web3.eth.subscribe('pendingTransactions', function (error, result) { })
                     }
                 }
 
-                if (transaction.from.toLowerCase() === contractOwner.toLowerCase()) {
-                    if (path[0].toLowerCase() === tokenToSnipe.toLowerCase()) {
-                        if (decodedInput !== undefined && decodedInput.name.includes("swap")) {
-                            console.log("😱 WATCHED BUYER IS MOVING TOKENS. SELLING EVERYTHING. ##########")
+                // if (transaction.from.toLowerCase() === contractOwner.toLowerCase()) {
+                //     if (path[0].toLowerCase() === tokenToSnipe.toLowerCase()) {
+                //         if (decodedInput !== undefined && decodedInput.name.includes("swap")) {
+                //             console.log("😱 WATCHED BUYER IS MOVING TOKENS. SELLING EVERYTHING. ##########")
 
-                            try {
-                                let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
-                                if (tokenBalanceWei <= 0) {
-                                    console.log("########## NO TOKENS OWNED - WATCHED BUYER INVOLVED, EXITING! ##########")
-                                    process.exit(0)
-                                }
-                                await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-                                    tokenBalanceWei.toString(),
-                                    "0",
-                                    [tokenToSnipe, addresses.WBNB],
-                                    process.env.DESTINATION_WALLET,
-                                    Math.floor(Date.now() / 1000) + 60 * 10,
-                                    {
-                                        gasPrice: (transaction.gasPrice * 5).toString(),
-                                        gasLimit: 1000000
-                                    }
-                                ).then(x => {
-                                    sold = true
-                                    process.exit(0)
-                                })
-                            } catch (err) {
-                                console.log(err)
-                                process.exit(0)
-                            }
-                        }
-                    }
-                }
+                //             try {
+                //                 let tokenBalanceWei = await tokenContract.methods.balanceOf(addresses.recipient).call()
+                //                 if (tokenBalanceWei <= 0) {
+                //                     console.log("########## NO TOKENS OWNED - WATCHED BUYER INVOLVED, EXITING! ##########")
+                //                     process.exit(0)
+                //                 }
+                //                 await router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+                //                     tokenBalanceWei.toString(),
+                //                     "0",
+                //                     [tokenToSnipe, addresses.WBNB],
+                //                     process.env.DESTINATION_WALLET,
+                //                     Math.floor(Date.now() / 1000) + 60 * 10,
+                //                     {
+                //                         gasPrice: (transaction.gasPrice * 5).toString(),
+                //                         gasLimit: 1000000
+                //                     }
+                //                 ).then(x => {
+                //                     sold = true
+                //                     process.exit(0)
+                //                 })
+                //             } catch (err) {
+                //                 console.log(err)
+                //                 process.exit(0)
+                //             }
+                //         }
+                //     }
+                // }
 
                 if (tokenFrom === myWallet && tokenTo.includes("0x0000000000000") > -1) {
                     console.log("########## Tokens being redirected. SELLING EVERYTHING. ##########")
