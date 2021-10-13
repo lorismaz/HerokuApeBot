@@ -2,5 +2,4 @@
 npm-debug.log
 .DS_Store
 .env
-package-lock.json
 bot.log
